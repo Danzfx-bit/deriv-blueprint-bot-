@@ -14,11 +14,10 @@ st.set_page_config(
 
 st.sidebar.title("NUTEC Blueprint AI")
 
-market = st.sidebar.title("NUTEC Blueprint AI")
-
 market_name = st.sidebar.selectbox(
     "Select Volatility Index",
-    list(MARKETS.keys())
+    list(MARKETS.keys()),
+    key="market_select"
 )
 
 market = MARKETS[market_name]
@@ -26,30 +25,22 @@ market = MARKETS[market_name]
 timeframe_name = st.sidebar.selectbox(
     "Select Timeframe",
     list(TIMEFRAMES.keys()),
-    index=1
+    index=1,
+    key="timeframe_select"
 )
 
 timeframe = TIMEFRAMES[timeframe_name]
 
 page = st.sidebar.radio(
     "Navigation",
-    [
-        "Dashboard",
-        "Matches & Differs"
-    ]
+    ["Dashboard", "Matches & Differs"],
+    key="navigation_radio"
 )
 
-page = st.sidebar.radio(
-    "Navigation",
-    [
-        "Dashboard",
-        "Matches & Differs"
-    ]
-)
+st.sidebar.success(f"Market: {market_name}")
+st.sidebar.info(f"Timeframe: {timeframe_name}")
 
-st.sidebar.success(f"Market: {market}")
 st.divider()
-
 st.subheader("📈 Live Market")
 
 try:
