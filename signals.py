@@ -4,7 +4,7 @@ from tracker import save_signal
 
 def analyze_digits(history, market="Unknown", duration=5):
 
-    if len(history) < 1000:
+    if len(history) < 50: 
         return {
             "signal": "WAIT",
             "number": "-",
