@@ -1,21 +1,34 @@
 import streamlit as st
 
 from dashboard import show_dashboard
+from matches_differs import show as show_matches
 from config import APP_NAME, MARKETS
 
 st.set_page_config(
     page_title=APP_NAME,
-    page_icon="📈",
+    page_icon="📊",
     layout="wide"
 )
 
-st.sidebar.title("📊 Market Selection")
+st.sidebar.title("NUTEC Blueprint AI")
 
 market = st.sidebar.selectbox(
-    "Select a Volatility Index",
+    "Select Volatility Index",
     MARKETS
 )
 
-st.sidebar.success(f"Selected Market: {market}")
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "Dashboard",
+        "Matches & Differs"
+    ]
+)
 
-show_dashboard()
+st.sidebar.success(f"Market: {market}")
+
+if page == "Dashboard":
+    show_dashboard()
+
+elif page == "Matches & Differs":
+    show_matches() 
