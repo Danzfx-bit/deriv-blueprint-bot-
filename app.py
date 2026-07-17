@@ -14,9 +14,29 @@ st.set_page_config(
 
 st.sidebar.title("NUTEC Blueprint AI")
 
-market = st.sidebar.selectbox(
+market = st.sidebar.title("NUTEC Blueprint AI")
+
+market_name = st.sidebar.selectbox(
     "Select Volatility Index",
-    MARKETS
+    list(MARKETS.keys())
+)
+
+market = MARKETS[market_name]
+
+timeframe_name = st.sidebar.selectbox(
+    "Select Timeframe",
+    list(TIMEFRAMES.keys()),
+    index=1
+)
+
+timeframe = TIMEFRAMES[timeframe_name]
+
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "Dashboard",
+        "Matches & Differs"
+    ]
 )
 
 page = st.sidebar.radio(
