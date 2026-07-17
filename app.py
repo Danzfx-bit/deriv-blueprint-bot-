@@ -63,6 +63,7 @@ try:
     elif "tick" in data:
         quote = data["tick"]["quote"]
         last_digit = str(quote)[-1]
+        st.session_state["last_digit"] = last_digit
 
         col1, col2 = st.columns(2)
 
