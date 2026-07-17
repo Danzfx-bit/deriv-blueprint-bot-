@@ -4,12 +4,12 @@ from tracker import save_signal
 
 def analyze_digits(history, market="Unknown", duration=5):
 
-    if len(history) < 50: 
+    if len(history) < 50:
         return {
             "signal": "WAIT",
             "number": "-",
             "blueprint_score": 0,
-            "confidence": "LOW",
+            "confidence": "0%",
             "duration": duration,
             "ranking": []
         }
@@ -68,14 +68,8 @@ def analyze_digits(history, market="Unknown", duration=5):
     best_digit = ranking[0][0]
     best_score = ranking[0][1]
 
-    if best_score >= 80:
-        confidence = "VERY HIGH"
-    elif best_score >= 70:
-        confidence = "HIGH"
-    elif best_score >= 60:
-        confidence = "MEDIUM"
-    else:
-        confidence = "LOW"
+    # Confidence percentage
+    confidence = round(best_score, 2)
 
     signal = "MATCH"
 
@@ -91,7 +85,7 @@ def analyze_digits(history, market="Unknown", duration=5):
         "signal": signal,
         "number": best_digit,
         "blueprint_score": best_score,
-        "confidence": confidence,
+        "confidence": f"{confidence}%",
         "duration": duration,
         "ranking": ranking
     }
