@@ -1,9 +1,11 @@
 from deriv_client import DerivClient
 import streamlit as st
+
 APP_ID = st.secrets["APP_ID"]
 API_TOKEN = st.secrets["API_TOKEN"]
+
 from dashboard import show_dashboard
-from modules.matches_differs import show as show_matches 
+from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
 
 st.set_page_config(
@@ -11,6 +13,8 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
+
+# ---------------- Sidebar ---------------- #
 
 st.sidebar.title("NUTEC Blueprint AI")
 
@@ -33,7 +37,10 @@ timeframe = TIMEFRAMES[timeframe_name]
 
 page = st.sidebar.radio(
     "Navigation",
-    ["Dashboard", "Matches & Differs"],
+    [
+        "Dashboard",
+        "Matches & Differs"
+    ],
     key="navigation_radio"
 )
 
@@ -41,6 +48,9 @@ st.sidebar.success(f"Market: {market_name}")
 st.sidebar.info(f"Timeframe: {timeframe_name}")
 
 st.divider()
+
+# ---------------- Live Market ---------------- #
+
 st.subheader("📈 Live Market")
 
 try:
@@ -48,9 +58,10 @@ try:
 
     data = client.get_latest_tick(market)
 
+    st.write(data)  # Temporary for debugging
+
     if "tick" in data:
         quote = data["tick"]["quote"]
-
         last_digit = str(quote)[-1]
 
         col1, col2 = st.columns(2)
@@ -68,8 +79,11 @@ try:
 
 except Exception as e:
     st.error(f"Connection Error: {e}")
+
+# ---------------- Pages ---------------- #
+
 if page == "Dashboard":
     show_dashboard()
 
 elif page == "Matches & Differs":
-    show_matches() 
+    show_matches()
