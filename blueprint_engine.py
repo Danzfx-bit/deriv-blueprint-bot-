@@ -150,8 +150,7 @@ class BlueprintEngine:
 
         best_score = ranking[0][1]["blueprint_score"]
 
-        confidence = confidence_result["confidence"]
-                # -----------------------------------
+        confidence = confidence_result["confidence"]        # -----------------------------------
         # Determine Signal
         # -----------------------------------
 
