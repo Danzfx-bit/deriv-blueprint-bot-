@@ -52,7 +52,7 @@ st.divider()
 
 st.subheader("📈 Live Market")
 
-    try:
+try:
     client = DerivClient(APP_ID)
 
     data = client.get_latest_tick(market)
@@ -69,7 +69,6 @@ st.subheader("📈 Live Market")
 
         st.session_state["digit_history"].append(int(last_digit))
 
-        # Keep only the latest 1000 digits
         if len(st.session_state["digit_history"]) > 1000:
             st.session_state["digit_history"].pop(0)
 
