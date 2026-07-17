@@ -30,27 +30,27 @@ class BlueprintEngine:
         # Minimum history requirement
         # -----------------------------------
 
-        if len(history) < 50:
+      if len(history) < 50:
 
-    return {
+            return {
 
-        "signal": "WAIT",
+                "signal": "WAIT",
 
-        "number": "-",
+                "number": "-",
 
-        "target_digit": "-",
+                "target_digit": "-",
 
-        "blueprint_score": 0,
+                "blueprint_score": 0,
 
-        "confidence": 0,
+                "confidence": 0,
 
-        "duration": 5,
+                "duration": 5,
 
-        "ranking": [],
+                "ranking": [],
 
-        "details": {}
+                "details": {}
 
-    }
+            }
 
         # -----------------------------------
         # Run all engines
