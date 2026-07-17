@@ -4,6 +4,9 @@ from signals import analyze_digits
 from database import load_ticks
 
 
+MIN_TICKS = 50
+
+
 def show():
 
     st.header("📡 NUTEC Blueprint Scanner")
@@ -20,14 +23,14 @@ def show():
     )
 
 
-    if len(history) < 1000:
+    if len(history) < MIN_TICKS:
 
         st.info(
-            f"Collecting data... ({len(history)}/1000 ticks)"
+            f"Collecting data... ({len(history)}/{MIN_TICKS} ticks)"
         )
 
         st.progress(
-            len(history) / 1000
+            len(history) / MIN_TICKS
         )
 
         return
@@ -44,6 +47,11 @@ def show():
     )
 
 
+    st.write(
+        "Press SCAN when you want a new signal."
+    )
+
+
     if st.button(
         "🔍 SCAN",
         use_container_width=True
@@ -56,7 +64,6 @@ def show():
             duration=5
         )
 
-
         st.session_state["scan_result"] = result
 
 
@@ -64,7 +71,7 @@ def show():
     if "scan_result" not in st.session_state:
 
         st.info(
-            "Press SCAN to analyse the latest 1000 ticks."
+            "Press SCAN to analyse the latest market data."
         )
 
         return
@@ -110,7 +117,6 @@ def show():
             result["confidence"]
         )
 
-
         st.metric(
             "Ticks Analysed",
             len(history)
@@ -125,7 +131,7 @@ def show():
     )
 
 
-    for i, item in enumerate(
+    for index, item in enumerate(
         result["ranking"],
         start=1
     ):
@@ -133,7 +139,7 @@ def show():
         digit, score = item
 
         st.write(
-            f"{i}. Digit {digit} → {score}%"
+            f"{index}. Digit {digit} → {score}%"
         )
 
 
@@ -152,4 +158,4 @@ def show():
                 history[-20:]
             )
         )
-        )
+    )
