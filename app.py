@@ -149,7 +149,7 @@ except Exception as e:
 
 if page == "Dashboard":
 
-    show_dashboard()
+    show_dashboard(market) 
 
 
 elif page == "Matches & Differs":
