@@ -32,23 +32,25 @@ class BlueprintEngine:
 
         if len(history) < 50:
 
-            return {
+    return {
 
-                "signal": "WAIT",
+        "signal": "WAIT",
 
-                "target_digit": "-",
+        "number": "-",
 
-                "blueprint_score": 0,
+        "target_digit": "-",
 
-                "confidence": 0,
+        "blueprint_score": 0,
 
-                "duration": 5,
+        "confidence": 0,
 
-                "ranking": [],
+        "duration": 5,
 
-                "details": {}
+        "ranking": [],
 
-            }
+        "details": {}
+
+    }
 
         # -----------------------------------
         # Run all engines
