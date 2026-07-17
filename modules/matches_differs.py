@@ -1,31 +1,49 @@
 import streamlit as st
+from collections import Counter
 
 
 def show():
 
     st.header("🎯 Matches & Differs")
 
-    if "last_digit" not in st.session_state:
+    if "digit_history" not in st.session_state:
         st.info("Waiting for live tick data...")
-
-        st.metric("Current Last Digit", "-")
-        st.metric("Recommended Trade", "Waiting")
-        st.metric("Confidence", "0%")
         return
 
-    last_digit = st.session_state["last_digit"]
+    history = st.session_state["digit_history"]
 
-    st.success("🟢 Live tick received")
+    if len(history) < 20:
+        st.info(f"Collecting data... ({len(history)}/20 ticks)")
+        return
+
+    last_digit = history[-1]
+
+    counts = Counter(history)
 
     st.metric("Current Last Digit", last_digit)
 
-    if last_digit in [0, 2, 4, 6, 8]:
+    st.subheader("Digit Frequency")
+
+    cols = st.columns(10)
+
+    for digit in range(10):
+        cols[digit].metric(str(digit), counts.get(digit, 0))
+
+    # Simple probability engine
+    least_seen = min(counts.values())
+    most_seen = max(counts.values())
+
+    if counts[last_digit] >= most_seen:
         recommendation = "DIFFER"
+        confidence = 75
+
+    elif counts[last_digit] <= least_seen:
+        recommendation = "MATCH"
+        confidence = 75
 
     else:
-        recommendation = "MATCH"
-
-    confidence = "60%"
+        recommendation = "WAIT"
+        confidence = 55
 
     st.metric("Recommended Trade", recommendation)
-    st.metric("Confidence", confidence) 
+    st.metric("Confidence", f"{confidence}%")
