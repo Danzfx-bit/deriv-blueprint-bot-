@@ -8,15 +8,17 @@ def show():
 
     st.header("📡 NUTEC Blueprint Scanner")
 
+
     market = st.session_state.get(
-        "market",
-        None
+        "market"
     )
+
 
     history = load_ticks(
         market,
         limit=1000
     )
+
 
     if len(history) < 1000:
 
@@ -42,15 +44,11 @@ def show():
     )
 
 
-    st.write(
-        "Press SCAN when you want a new signal."
-    )
-
-
     if st.button(
         "🔍 SCAN",
         use_container_width=True
     ):
+
 
         result = analyze_digits(
             history,
@@ -58,16 +56,19 @@ def show():
             duration=5
         )
 
+
         st.session_state["scan_result"] = result
+
 
 
     if "scan_result" not in st.session_state:
 
         st.info(
-            "No scan performed yet."
+            "Press SCAN to analyse the latest 1000 ticks."
         )
 
         return
+
 
 
     result = st.session_state["scan_result"]
@@ -109,6 +110,7 @@ def show():
             result["confidence"]
         )
 
+
         st.metric(
             "Ticks Analysed",
             len(history)
@@ -123,7 +125,7 @@ def show():
     )
 
 
-    for index, item in enumerate(
+    for i, item in enumerate(
         result["ranking"],
         start=1
     ):
@@ -131,7 +133,7 @@ def show():
         digit, score = item
 
         st.write(
-            f"{index}. Digit {digit} → {score}%"
+            f"{i}. Digit {digit} → {score}%"
         )
 
 
@@ -150,4 +152,4 @@ def show():
                 history[-20:]
             )
         )
-    )
+        )
