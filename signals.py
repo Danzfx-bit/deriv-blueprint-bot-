@@ -4,23 +4,21 @@ from tracker import save_signal
 
 def analyze_digits(history, market="Unknown", duration=5):
 
-    if len(history) < 100:
-
+    if len(history) < 1000:
         return {
             "signal": "WAIT",
             "number": "-",
-            "match_probability": 0,
-            "differ_probability": 0,
+            "blueprint_score": 0,
             "confidence": "LOW",
             "duration": duration,
-            "ranking": {}
+            "ranking": []
         }
 
     total = len(history)
 
-    frequency = Counter(history)
-
     recent = history[-100:]
+
+    frequency = Counter(history)
 
     recent_frequency = Counter(recent)
 
@@ -28,21 +26,38 @@ def analyze_digits(history, market="Unknown", duration=5):
 
     for digit in range(10):
 
-        long_score = (
-            frequency.get(digit, 0) / total
-        ) * 100
+        # Long-term frequency (0–25)
+        long_freq = frequency.get(digit, 0) / total
+        long_score = long_freq * 25
 
-        recent_score = (
-            recent_frequency.get(digit, 0) / len(recent)
-        ) * 100
+        # Recent frequency (0–35)
+        recent_freq = recent_frequency.get(digit, 0) / len(recent)
+        recent_score = recent_freq * 35
 
-        score = (
-            long_score * 0.60
-            +
-            recent_score * 0.40
+        # Momentum (0–20)
+        momentum = max(0, recent_freq - long_freq)
+        momentum_score = min(momentum * 200, 20)
+
+        # Recency (0–10)
+        try:
+            last_seen = len(history) - 1 - history[::-1].index(digit)
+            ticks_since = len(history) - last_seen
+            recency_score = max(0, 10 - (ticks_since / 10))
+        except ValueError:
+            recency_score = 0
+
+        # Pattern bonus (placeholder)
+        pattern_bonus = 10
+
+        blueprint_score = (
+            long_score +
+            recent_score +
+            momentum_score +
+            recency_score +
+            pattern_bonus
         )
 
-        scores[digit] = round(score, 2)
+        scores[digit] = round(min(blueprint_score, 100), 2)
 
     ranking = sorted(
         scores.items(),
@@ -51,54 +66,32 @@ def analyze_digits(history, market="Unknown", duration=5):
     )
 
     best_digit = ranking[0][0]
+    best_score = ranking[0][1]
 
-    match_probability = ranking[0][1]
-
-    differ_probability = round(
-        100 - match_probability,
-        2
-    )
-
-    if match_probability >= 60:
-        signal = "MATCH"
-    else:
-        signal = "DIFFER"
-
-    confidence = "LOW"
-
-    if max(match_probability, differ_probability) >= 80:
+    if best_score >= 80:
+        confidence = "VERY HIGH"
+    elif best_score >= 70:
         confidence = "HIGH"
-
-    elif max(match_probability, differ_probability) >= 65:
+    elif best_score >= 60:
         confidence = "MEDIUM"
+    else:
+        confidence = "LOW"
+
+    signal = "MATCH"
 
     save_signal(
         market=market,
         signal=signal,
         digit=best_digit,
-        probability=max(
-            match_probability,
-            differ_probability
-        ),
+        probability=best_score,
         duration=duration
     )
 
     return {
-
         "signal": signal,
-
         "number": best_digit,
-
-        "match_probability": round(
-            match_probability,
-            2
-        ),
-
-        "differ_probability": differ_probability,
-
+        "blueprint_score": best_score,
         "confidence": confidence,
-
         "duration": duration,
-
-        "ranking": ranking[:5]
+        "ranking": ranking
     }
