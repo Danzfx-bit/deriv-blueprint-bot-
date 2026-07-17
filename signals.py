@@ -1,28 +1,42 @@
+
 from collections import Counter
 
 
-def analyze_digits(ticks):
-    """
-    Analyze the last digits from a list of tick prices.
-    """
+def analyze_digits(history):
 
-    digits = [int(str(price)[-1]) for price in ticks]
+    if len(history) == 0:
+        return {
+            "match_probability": 0,
+            "differ_probability": 0,
+            "recommendation": "WAIT",
+            "confidence": 0
+        }
 
-    counts = Counter(digits)
+    current_digit = history[-1]
 
-    total = len(digits)
+    counts = Counter(history)
 
-    probabilities = {
-        digit: round((counts.get(digit, 0) / total) * 100, 2)
-        for digit in range(10)
-    }
+    digit_frequency = counts.get(current_digit, 0)
 
-    hottest = max(probabilities, key=probabilities.get)
-    coldest = min(probabilities, key=probabilities.get)
+    match_probability = (digit_frequency / len(history)) * 100
+
+    differ_probability = 100 - match_probability
+
+
+    if differ_probability > match_probability:
+        recommendation = "DIFFER"
+        confidence = differ_probability
+
+    else:
+        recommendation = "MATCH"
+        confidence = match_probability
+
 
     return {
-        "counts": counts,
-        "probabilities": probabilities,
-        "hot_digit": hottest,
-        "cold_digit": coldest
-  }
+        "current_digit": current_digit,
+        "match_probability": round(match_probability, 2),
+        "differ_probability": round(differ_probability, 2),
+        "recommendation": recommendation,
+        "confidence": round(confidence, 2),
+        "frequency": digit_frequency
+    }  
