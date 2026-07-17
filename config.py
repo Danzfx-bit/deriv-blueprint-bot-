@@ -10,7 +10,7 @@ MARKETS = {
     "Volatility 75 Index": "R_75",
     "Volatility 75 (1s) Index": "1HZ75V",
     "Volatility 100 Index": "R_100",
-    "Volatility 100 (1s) Index": "1HZ100V
+    "Volatility 100 (1s) Index": "1HZ100V", 
 }
 
 TIMEFRAMES = {
