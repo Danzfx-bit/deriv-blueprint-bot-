@@ -1,4 +1,0 @@
-    streamlit
-    deriv-api
-    websocket-client
-    pandas
