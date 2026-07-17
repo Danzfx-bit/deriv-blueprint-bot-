@@ -8,17 +8,19 @@ def show():
 
     if "digit_history" not in st.session_state:
 
-        st.warning("No tick data available yet.")
+        st.warning("Waiting for live market connection...")
 
         return
 
     history = st.session_state["digit_history"]
 
-    if len(history) < 100:
+    if len(history) < 1000:
 
         st.info(
-            f"Collecting data... ({len(history)}/100 ticks)"
+            f"Collecting market data... ({len(history)}/1000 ticks)"
         )
+
+        st.progress(len(history) / 1000)
 
         return
 
@@ -28,14 +30,7 @@ def show():
         duration=5
     )
 
-    signal = result["signal"]
-    digit = result["number"]
-    confidence = result["confidence"]
-    duration = result["duration"]
-    match_probability = result["match_probability"]
-    differ_probability = result["differ_probability"]
-
-    st.success("🟢 Scanner Active")
+    st.success("🟢 Scanner Ready")
 
     col1, col2 = st.columns(2)
 
@@ -43,67 +38,66 @@ def show():
 
         st.metric(
             "Signal",
-            signal
+            result["signal"]
         )
 
         st.metric(
             "Target Digit",
-            digit
+            result["number"]
         )
 
         st.metric(
             "Duration",
-            f"{duration} ticks"
+            f'{result["duration"]} Ticks'
         )
 
     with col2:
 
         st.metric(
-            "Match Score",
-            f"{match_probability}%"
-        )
-
-        st.metric(
-            "Differ Score",
-            f"{differ_probability}%"
+            "Blueprint Score",
+            f'{result["blueprint_score"]:.2f}'
         )
 
         st.metric(
             "Confidence",
-            confidence
+            result["confidence"]
+        )
+
+        st.metric(
+            "Ticks Analysed",
+            len(history)
         )
 
     st.divider()
 
     st.subheader("🏆 Top Ranked Digits")
 
-    ranking = result["ranking"]
+    ranking = result["ranking"][:5]
 
     for position, (digit, score) in enumerate(ranking, start=1):
 
         st.write(
-            f"{position}. Digit {digit} → {score}%"
+            f"**{position}.** Digit **{digit}** — Blueprint Score **{score:.2f}**"
         )
 
     st.divider()
 
-    st.subheader("📊 Analysis")
+    st.subheader("📊 Scanner Status")
 
-    st.write("✓ Historical frequency analysis")
-    st.write("✓ Recent momentum analysis")
-    st.write("✓ Top-ranked digit selection")
-    st.write("✓ Confidence scoring")
+    st.success("✓ 1000 historical ticks loaded")
+
+    st.success("✓ Blueprint scoring active")
+
+    st.success("✓ Ranking engine running")
+
+    st.success("✓ Signal generated")
 
     st.divider()
 
-    st.subheader("📈 Tick Statistics")
+    st.subheader("📈 Latest 20 Digits")
 
-    st.metric(
-        "Ticks Analysed",
-        len(history)
-    )
+    recent = history[-20:]
 
-    st.metric(
-        "Latest Digit",
-        history[-1]
+    st.write(
+        " ".join(map(str, recent))
     )
