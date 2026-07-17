@@ -52,7 +52,7 @@ st.divider()
 
 st.subheader("📈 Live Market")
 
-try:
+    try:
     client = DerivClient(APP_ID)
 
     data = client.get_latest_tick(market)
@@ -60,7 +60,7 @@ try:
     if "error" in data:
         st.error(data["error"])
 
-        elif "tick" in data:
+    elif "tick" in data:
         quote = data["tick"]["quote"]
         last_digit = str(quote)[-1]
 
