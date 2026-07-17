@@ -1,4 +1,4 @@
 streamlit
-deriv-api
+python-deriv-api
 websocket-client
 pandas
