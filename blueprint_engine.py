@@ -3,21 +3,6 @@
 NUTEC Blueprint Engine v2.0
 Core Analysis Engine
 ==========================================================
-
-This engine combines:
-
-1. Frequency Engine
-2. Momentum Engine
-3. Transition Engine
-4. Confidence Engine
-
-Future versions will add:
-
-- Pattern Engine
-- Recency Engine
-- AI Learning Engine
-
-==========================================================
 """
 
 from frequency_engine import FrequencyEngine
@@ -30,8 +15,6 @@ class BlueprintEngine:
 
     def __init__(self):
 
-        # Initialise all engines
-
         self.frequency_engine = FrequencyEngine()
 
         self.momentum_engine = MomentumEngine()
@@ -43,15 +26,9 @@ class BlueprintEngine:
 
     def analyze(self, history):
 
-        """
-        Main Blueprint Analysis Pipeline
-
-        Input:
-            history -> List[int]
-
-        Output:
-            Blueprint Analysis Dictionary
-        """
+        # -----------------------------------
+        # Minimum history requirement
+        # -----------------------------------
 
         if len(history) < 50:
 
@@ -65,15 +42,17 @@ class BlueprintEngine:
 
                 "confidence": 0,
 
+                "duration": 5,
+
                 "ranking": [],
 
                 "details": {}
 
             }
 
-        # ---------------------------------------
-        # Run every analysis engine
-        # ---------------------------------------
+        # -----------------------------------
+        # Run all engines
+        # -----------------------------------
 
         frequency_scores = self.frequency_engine.analyze(
             history
@@ -97,17 +76,165 @@ class BlueprintEngine:
 
         )
 
-        # Everything after this point will be
-        # calculated in Part 2
+        # -----------------------------------
+        # Merge Blueprint Scores
+        # -----------------------------------
+
+        blueprint_scores = {}
+
+        for digit in range(10):
+
+            frequency = frequency_scores.get(
+                digit,
+                {}
+            ).get(
+                "score",
+                0
+            )
+
+            momentum = momentum_scores.get(
+                digit,
+                {}
+            ).get(
+                "score",
+                0
+            )
+
+            transition = transition_scores.get(
+                digit,
+                {}
+            ).get(
+                "score",
+                0
+            )
+
+            total = round(
+
+                frequency +
+
+                momentum +
+
+                transition,
+
+                2
+
+            )
+
+            blueprint_scores[digit] = {
+
+                "frequency": frequency,
+
+                "momentum": momentum,
+
+                "transition": transition,
+
+                "blueprint_score": total
+
+            }
+
+        # -----------------------------------
+        # Rank Blueprint Scores
+        # -----------------------------------
+
+        ranking = sorted(
+
+            blueprint_scores.items(),
+
+            key=lambda x: x[1]["blueprint_score"],
+
+            reverse=True
+
+        )
+
+        best_digit = ranking[0][0]
+
+        best_score = ranking[0][1]["blueprint_score"]
+
+        confidence = confidence_result["confidence"]
+                # -----------------------------------
+        # Determine Signal
+        # -----------------------------------
+
+        if best_score >= 55:
+
+            signal = "STRONG MATCH"
+
+        elif best_score >= 40:
+
+            signal = "MATCH"
+
+        elif best_score >= 25:
+
+            signal = "WATCH"
+
+        else:
+
+            signal = "WAIT"
+
+        # -----------------------------------
+        # Convert Ranking
+        # -----------------------------------
+
+        final_ranking = []
+
+        for digit, values in ranking:
+
+            final_ranking.append(
+
+                (
+                    digit,
+                    round(
+                        values["blueprint_score"],
+                        2
+                    )
+                )
+
+            )
+
+        # -----------------------------------
+        # Build Engine Details
+        # -----------------------------------
+
+        details = {
+
+            "frequency": frequency_scores,
+
+            "momentum": momentum_scores,
+
+            "transition": transition_scores,
+
+            "confidence": confidence_result,
+
+            "blueprint": blueprint_scores
+
+        }
+
+        # -----------------------------------
+        # Final Output
+        # -----------------------------------
 
         return {
 
-            "frequency_scores": frequency_scores,
+            "signal": signal,
 
-            "momentum_scores": momentum_scores,
+            "number": best_digit,
 
-            "transition_scores": transition_scores,
+            "target_digit": best_digit,
 
-            "confidence_result": confidence_result
+            "blueprint_score": round(
+                best_score,
+                2
+            ),
 
-          }
+            "confidence": round(
+                confidence,
+                2
+            ),
+
+            "duration": 5,
+
+            "ranking": final_ranking,
+
+            "details": details
+
+        }
