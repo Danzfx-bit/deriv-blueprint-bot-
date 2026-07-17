@@ -1,12 +1,12 @@
 from deriv_client import DerivClient
 import streamlit as st
 
-APP_ID = st.secrets["APP_ID"]
-API_TOKEN = st.secrets["API_TOKEN"]
-
 from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
+
+APP_ID = st.secrets["APP_ID"]
+API_TOKEN = st.secrets["API_TOKEN"]
 
 st.set_page_config(
     page_title=APP_NAME,
@@ -16,7 +16,7 @@ st.set_page_config(
 
 # ---------------- Sidebar ---------------- #
 
-st.sidebar.title("NUTEC Blueprint AI")
+st.sidebar.title(APP_NAME)
 
 market_name = st.sidebar.selectbox(
     "Select Volatility Index",
@@ -29,7 +29,6 @@ market = MARKETS[market_name]
 timeframe_name = st.sidebar.selectbox(
     "Select Timeframe",
     list(TIMEFRAMES.keys()),
-    index=1,
     key="timeframe_select"
 )
 
@@ -58,12 +57,10 @@ try:
 
     data = client.get_latest_tick(market)
 
-    st.write(data)  # Temporary for debugging
-
     if "error" in data:
-    st.error(data["error"])
+        st.error(data["error"])
 
-elif "tick" in data:
+    elif "tick" in data:
         quote = data["tick"]["quote"]
         last_digit = str(quote)[-1]
 
@@ -78,6 +75,7 @@ elif "tick" in data:
         st.success("🟢 Connected to Deriv")
 
     else:
+        st.write(data)
         st.error("No tick data received.")
 
 except Exception as e:
