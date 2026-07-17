@@ -1,16 +1,25 @@
 APP_NAME = "deriv blueprint bot"
 
-MARKETS = [
-    "R_10",
-    "R_10S",
-    "R_25",
-    "R_25S",
-    "R_50",
-    "R_50S",
-    "R_75",
-    "R_75S",
-    "R_100",
-    "R_100S"
+VOLATILITY_MARKETS = {
+    "Volatility 10 Index": "R_10",
+    "Volatility 25 Index": "R_25",
+    "Volatility 50 Index": "R_50",
+    "Volatility 75 Index": "R_75",
+    "Volatility 100 Index": "R_100",
+
+    "Volatility 10 (1s) Index": "1HZ10V",
+    "Volatility 25 (1s) Index": "1HZ25V",
+    "Volatility 50 (1s) Index": "1HZ50V",
+    "Volatility 75 (1s) Index": "1HZ75V",
+    "Volatility 100 (1s) Index": "1HZ100V",
+
+    "Volatility 150 Index": "R_150",
+    "Volatility 200 Index": "R_200",
+    "Volatility 250 Index": "R_250",
+    "Volatility 300 Index": "R_300"
+}
+
+DEFAULT_MARKET = "R_100" 
 ]
 
 TIMEFRAMES = [
