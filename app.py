@@ -1,7 +1,7 @@
 import streamlit as st
 
 from dashboard import show_dashboard
-from matches_differs import show as show_matches
+from modules.matches_differs import show as show_matches 
 from config import APP_NAME, MARKETS
 
 st.set_page_config(
