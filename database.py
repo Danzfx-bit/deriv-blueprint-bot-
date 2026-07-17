@@ -1,58 +1,139 @@
+import sqlite3
 import os
-import pandas as pd
 from datetime import datetime
 
 
 DB_FOLDER = "data"
-DB_FILE = "data/ticks.csv"
+DB_FILE = "data/ticks.db"
+
+
+def create_database():
+
+    os.makedirs(DB_FOLDER, exist_ok=True)
+
+    conn = sqlite3.connect(DB_FILE)
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ticks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            market TEXT,
+            price REAL,
+            digit INTEGER
+        )
+    """)
+
+    conn.commit()
+    conn.close()
 
 
 def save_tick(market, price, digit):
 
-    os.makedirs(DB_FOLDER, exist_ok=True)
+    create_database()
 
-    new_data = pd.DataFrame([{
-        "timestamp": datetime.utcnow(),
-        "market": market,
-        "price": price,
-        "digit": int(digit)
-    }])
+    conn = sqlite3.connect(DB_FILE)
 
+    cursor = conn.cursor()
 
-    if os.path.exists(DB_FILE):
-
-        old_data = pd.read_csv(DB_FILE)
-
-        data = pd.concat(
-            [old_data, new_data],
-            ignore_index=True
+    cursor.execute("""
+        INSERT INTO ticks (
+            timestamp,
+            market,
+            price,
+            digit
         )
+        VALUES (?, ?, ?, ?)
+    """, (
+        datetime.utcnow().isoformat(),
+        market,
+        float(price),
+        int(digit)
+    ))
 
-    else:
+    conn.commit()
 
-        data = new_data
-
-
-    data.to_csv(
-        DB_FILE,
-        index=False
-    )
-
-
-def load_ticks(market=None):
-
-    if not os.path.exists(DB_FILE):
-        return []
+    conn.close()
 
 
-    data = pd.read_csv(DB_FILE)
+def load_ticks(market=None, limit=1000):
+
+    create_database()
+
+    conn = sqlite3.connect(DB_FILE)
+
+    cursor = conn.cursor()
 
 
     if market:
 
-        data = data[
-            data["market"] == market
-        ]
+        cursor.execute("""
+            SELECT digit
+            FROM ticks
+            WHERE market = ?
+            ORDER BY id DESC
+            LIMIT ?
+        """, (
+            market,
+            limit
+        ))
+
+    else:
+
+        cursor.execute("""
+            SELECT digit
+            FROM ticks
+            ORDER BY id DESC
+            LIMIT ?
+        """, (
+            limit,
+        ))
 
 
-    return data["digit"].astype(int).tolist()
+    rows = cursor.fetchall()
+
+    conn.close()
+
+
+    # Reverse so oldest → newest
+    digits = [
+        row[0]
+        for row in reversed(rows)
+    ]
+
+    return digits
+
+
+def get_tick_count(market=None):
+
+    create_database()
+
+    conn = sqlite3.connect(DB_FILE)
+
+    cursor = conn.cursor()
+
+
+    if market:
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM ticks
+            WHERE market = ?
+        """, (
+            market,
+        ))
+
+    else:
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM ticks
+        """)
+
+
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
