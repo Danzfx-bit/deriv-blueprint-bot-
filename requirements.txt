@@ -1,4 +1,6 @@
-streamlit
+streamlit==1.46.1
+pandas==2.3.1
+plotly==6.2.0
+websocket-client==1.8.0
 python-deriv-api
-websocket-client
-pandas
+streamlit-autorefresh
