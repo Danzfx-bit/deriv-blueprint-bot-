@@ -1,3 +1,4 @@
+from deriv_client import DerivClient
 import streamlit as st
 APP_ID = st.secrets["APP_ID"]
 API_TOKEN = st.secrets["API_TOKEN"]
@@ -27,7 +28,35 @@ page = st.sidebar.radio(
 )
 
 st.sidebar.success(f"Market: {market}")
+st.divider()
 
+st.subheader("📈 Live Market")
+
+try:
+    client = DerivClient(APP_ID)
+
+    data = client.get_latest_tick(market)
+
+    if "tick" in data:
+        quote = data["tick"]["quote"]
+
+        last_digit = str(quote)[-1]
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric("Current Price", quote)
+
+        with col2:
+            st.metric("Last Digit", last_digit)
+
+        st.success("🟢 Connected to Deriv")
+
+    else:
+        st.error("No tick data received.")
+
+except Exception as e:
+    st.error(f"Connection Error: {e}")
 if page == "Dashboard":
     show_dashboard()
 
