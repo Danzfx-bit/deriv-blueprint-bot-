@@ -5,6 +5,7 @@ from streamlit_autorefresh import st_autorefresh
 from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
+from database import save_tick
 
 APP_ID = st.secrets["APP_ID"]
 API_TOKEN = st.secrets["API_TOKEN"]
@@ -76,14 +77,21 @@ try:
         if "digit_history" not in st.session_state:
             st.session_state["digit_history"] = []
 
-        # Save tick digit
+        # Save tick in memory
         st.session_state["digit_history"].append(
             int(last_digit)
         )
 
-        # Keep only latest 1000 ticks
+        # Keep only latest 1000 ticks in memory
         if len(st.session_state["digit_history"]) > 1000:
             st.session_state["digit_history"].pop(0)
+
+        # Save tick permanently
+        save_tick(
+            market=market,
+            price=quote,
+            digit=last_digit
+        )
 
         st.session_state["last_digit"] = last_digit
 
@@ -121,7 +129,6 @@ try:
 
 except Exception as e:
     st.error(f"Connection Error: {e}")
-
 
 # ---------------- Pages ---------------- #
 
