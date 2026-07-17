@@ -8,18 +8,23 @@ def show():
 
     if "digit_history" not in st.session_state:
         st.info("Waiting for live tick data...")
+        st.metric("Current Last Digit", "-")
+        st.metric("Recommended Trade", "Waiting")
+        st.metric("Confidence", "0%")
         return
 
     history = st.session_state["digit_history"]
 
     if len(history) < 1000:
-    st.info(f"Collecting data... ({len(history)}/1000 ticks)")
-    st.progress(len(history) / 1000)
-    return
+        st.info(f"Collecting data... ({len(history)}/1000 ticks)")
+        st.progress(len(history) / 1000)
+        return
 
     last_digit = history[-1]
 
     counts = Counter(history)
+
+    st.success("🟢 Analysis Ready")
 
     st.metric("Current Last Digit", last_digit)
 
@@ -30,21 +35,29 @@ def show():
     for digit in range(10):
         cols[digit].metric(str(digit), counts.get(digit, 0))
 
-    # Simple probability engine
-    least_seen = min(counts.values())
-    most_seen = max(counts.values())
+    most_common = counts.most_common()
 
-    if counts[last_digit] >= most_seen:
+    hottest_digit = most_common[0][0]
+    hottest_count = most_common[0][1]
+
+    coldest_digit = min(counts, key=counts.get)
+    coldest_count = counts[coldest_digit]
+
+    st.write("### Market Statistics")
+    st.write(f"🔥 Hottest Digit: **{hottest_digit}** ({hottest_count} occurrences)")
+    st.write(f"❄️ Coldest Digit: **{coldest_digit}** ({coldest_count} occurrences)")
+
+    if last_digit == hottest_digit:
         recommendation = "DIFFER"
-        confidence = 75
+        confidence = 80
 
-    elif counts[last_digit] <= least_seen:
+    elif last_digit == coldest_digit:
         recommendation = "MATCH"
-        confidence = 75
+        confidence = 80
 
     else:
         recommendation = "WAIT"
-        confidence = 55
+        confidence = 60
 
     st.metric("Recommended Trade", recommendation)
     st.metric("Confidence", f"{confidence}%")
