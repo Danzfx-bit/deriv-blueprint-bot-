@@ -60,7 +60,10 @@ try:
 
     st.write(data)  # Temporary for debugging
 
-    if "tick" in data:
+    if "error" in data:
+    st.error(data["error"])
+
+elif "tick" in data:
         quote = data["tick"]["quote"]
         last_digit = str(quote)[-1]
 
