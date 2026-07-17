@@ -30,9 +30,9 @@ class BlueprintEngine:
         # Minimum history requirement
         # -----------------------------------
 
-      if len(history) < 50:
+         if len(history) < 50:
 
-            return {
+              return {
 
                 "signal": "WAIT",
 
