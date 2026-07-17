@@ -1,5 +1,6 @@
 import streamlit as st
-
+APP_ID = st.secrets["APP_ID"]
+API_TOKEN = st.secrets["API_TOKEN"]
 from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches 
 from config import APP_NAME, MARKETS
