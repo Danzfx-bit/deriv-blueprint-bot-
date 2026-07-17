@@ -1,7 +1,8 @@
-APP_NAME = "deriv blueprint bot"
 
 
-MARKETS = {
+APP_NAME = "NUTEC Blueprint AI"
+
+VOLATILITY_MARKETS = {
     "Volatility 10 Index": "R_10",
     "Volatility 25 Index": "R_25",
     "Volatility 50 Index": "R_50",
@@ -19,6 +20,9 @@ MARKETS = {
     "Volatility 250 Index": "R_250",
     "Volatility 300 Index": "R_300"
 }
+
+# Keep MARKETS as an alias so your existing app.py does not break
+MARKETS = VOLATILITY_MARKETS
 
 DEFAULT_MARKET = "R_100" 
 ]
