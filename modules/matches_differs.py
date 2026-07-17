@@ -1,33 +1,4 @@
 import streamlit as st
-from database import load_ticks, get_tick_count
-
-
-def show():
-
-    st.header("📡 NUTEC Blueprint Scanner")
-
-    market = st.session_state.get("market")
-
-    st.write("Selected Market:", market)
-
-    total_ticks = get_tick_count(market)
-
-    st.write("Database Tick Count:", total_ticks)
-
-    history = load_ticks(
-        market,
-        limit=1000
-    )
-
-    st.write("Loaded Into Scanner:", len(history))
-
-    if len(history) > 0:
-        st.write("Last 20 Digits:")
-        st.write(history[-20:])
-
-    else:
-        st.error("No data loaded from database")
-import streamlit as st
 
 from signals import analyze_digits
 from database import load_ticks
@@ -37,18 +8,15 @@ def show():
 
     st.header("📡 NUTEC Blueprint Scanner")
 
-
     market = st.session_state.get(
         "market",
         None
     )
 
-
     history = load_ticks(
         market,
         limit=1000
     )
-
 
     if len(history) < 1000:
 
@@ -84,16 +52,13 @@ def show():
         use_container_width=True
     ):
 
-
         result = analyze_digits(
             history,
             market=market,
             duration=5
         )
 
-
         st.session_state["scan_result"] = result
-
 
 
     if "scan_result" not in st.session_state:
@@ -105,9 +70,7 @@ def show():
         return
 
 
-
     result = st.session_state["scan_result"]
-
 
 
     st.divider()
@@ -123,18 +86,15 @@ def show():
             result["signal"]
         )
 
-
         st.metric(
             "Target Digit",
             result["number"]
         )
 
-
         st.metric(
             "Duration",
             f"{result['duration']} ticks"
         )
-
 
 
     with col2:
@@ -144,18 +104,15 @@ def show():
             f"{result['blueprint_score']}%"
         )
 
-
         st.metric(
             "Confidence",
             result["confidence"]
         )
 
-
         st.metric(
             "Ticks Analysed",
             len(history)
         )
-
 
 
     st.divider()
@@ -176,7 +133,6 @@ def show():
         st.write(
             f"{index}. Digit {digit} → {score}%"
         )
-
 
 
     st.divider()
