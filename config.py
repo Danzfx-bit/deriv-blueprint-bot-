@@ -1,8 +1,6 @@
-
-
 APP_NAME = "NUTEC Blueprint AI"
 
-VOLATILITY_MARKETS = {
+MARKETS = {
     "Volatility 10 Index": "R_10",
     "Volatility 25 Index": "R_25",
     "Volatility 50 Index": "R_50",
@@ -21,17 +19,15 @@ VOLATILITY_MARKETS = {
     "Volatility 300 Index": "R_300"
 }
 
-# Keep MARKETS as an alias so your existing app.py does not break
-MARKETS = VOLATILITY_MARKETS
+TIMEFRAMES = {
+    "1 Minute": 60,
+    "5 Minutes": 300,
+    "15 Minutes": 900,
+    "30 Minutes": 1800,
+    "1 Hour": 3600,
+    "4 Hours": 14400,
+    "1 Day": 86400
+}
 
-DEFAULT_MARKET = "R_100" 
-]
-
-TIMEFRAMES = [
-    "Ticks",
-    "1 Minute",
-    "5 Minutes",
-    "15 Minutes",
-    "30 Minutes",
-    "1 Hour"
-]
+DEFAULT_MARKET = "R_100"
+DEFAULT_TIMEFRAME = 300
