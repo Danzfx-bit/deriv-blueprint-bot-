@@ -63,7 +63,16 @@ try:
     elif "tick" in data:
         quote = data["tick"]["quote"]
         last_digit = str(quote)[-1]
-        st.session_state["last_digit"] = last_digit
+        if "digit_history" not in st.session_state:
+    st.session_state["digit_history"] = []
+
+st.session_state["digit_history"].append(int(last_digit))
+
+# Keep only the latest 1000 digits
+if len(st.session_state["digit_history"]) > 1000:
+    st.session_state["digit_history"].pop(0)
+
+st.session_state["last_digit"] = last_digit
 
         col1, col2 = st.columns(2)
 
