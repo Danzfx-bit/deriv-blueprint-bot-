@@ -12,9 +12,10 @@ def show():
 
     history = st.session_state["digit_history"]
 
-    if len(history) < 20:
-        st.info(f"Collecting data... ({len(history)}/20 ticks)")
-        return
+    if len(history) < 1000:
+    st.info(f"Collecting data... ({len(history)}/1000 ticks)")
+    st.progress(len(history) / 1000)
+    return
 
     last_digit = history[-1]
 
