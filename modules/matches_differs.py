@@ -1,4 +1,33 @@
 import streamlit as st
+from database import load_ticks, get_tick_count
+
+
+def show():
+
+    st.header("📡 NUTEC Blueprint Scanner")
+
+    market = st.session_state.get("market")
+
+    st.write("Selected Market:", market)
+
+    total_ticks = get_tick_count(market)
+
+    st.write("Database Tick Count:", total_ticks)
+
+    history = load_ticks(
+        market,
+        limit=1000
+    )
+
+    st.write("Loaded Into Scanner:", len(history))
+
+    if len(history) > 0:
+        st.write("Last 20 Digits:")
+        st.write(history[-20:])
+
+    else:
+        st.error("No data loaded from database")
+import streamlit as st
 
 from signals import analyze_digits
 from database import load_ticks
