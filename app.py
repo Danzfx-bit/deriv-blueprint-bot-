@@ -39,6 +39,9 @@ market_name = st.sidebar.selectbox(
 
 market = MARKETS[market_name]
 
+# Save selected market for scanner
+st.session_state["market"] = market
+
 
 timeframe_name = st.sidebar.selectbox(
     "Select Timeframe",
