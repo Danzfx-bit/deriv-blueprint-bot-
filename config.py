@@ -1,6 +1,7 @@
 APP_NAME = "deriv blueprint bot"
 
-VOLATILITY_MARKETS = {
+
+MARKETS = {
     "Volatility 10 Index": "R_10",
     "Volatility 25 Index": "R_25",
     "Volatility 50 Index": "R_50",
