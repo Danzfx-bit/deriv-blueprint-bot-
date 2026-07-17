@@ -5,7 +5,7 @@ from streamlit_autorefresh import st_autorefresh
 from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
-from database import save_tick, load_ticks, get_tick_count
+from database import save_tick, get_tick_count
 
 
 APP_ID = st.secrets["APP_ID"]
@@ -33,20 +33,19 @@ st.sidebar.title(APP_NAME)
 
 market_name = st.sidebar.selectbox(
     "Select Volatility Index",
-    list(MARKETS.keys()),
-    key="market_select"
+    list(MARKETS.keys())
 )
 
 market = MARKETS[market_name]
 
-# Save selected market for scanner
+
+# Pass market to scanner
 st.session_state["market"] = market
 
 
 timeframe_name = st.sidebar.selectbox(
     "Select Timeframe",
-    list(TIMEFRAMES.keys()),
-    key="timeframe_select"
+    list(TIMEFRAMES.keys())
 )
 
 timeframe = TIMEFRAMES[timeframe_name]
@@ -73,16 +72,6 @@ st.sidebar.info(
 st.divider()
 
 
-# ---------------- Load Stored Data ---------------- #
-
-if "digit_history" not in st.session_state:
-
-    st.session_state["digit_history"] = load_ticks(
-        market,
-        limit=1000
-    )
-
-
 # ---------------- Live Market ---------------- #
 
 st.subheader("📈 Live Market")
@@ -104,23 +93,12 @@ try:
         last_digit = str(quote)[-1]
 
 
-        # Save permanently
+        # Save ONLY to database
         save_tick(
             market,
             quote,
             last_digit
         )
-
-
-        # Update memory
-        st.session_state["digit_history"].append(
-            int(last_digit)
-        )
-
-
-        if len(st.session_state["digit_history"]) > 1000:
-
-            st.session_state["digit_history"].pop(0)
 
 
         col1, col2 = st.columns(2)
