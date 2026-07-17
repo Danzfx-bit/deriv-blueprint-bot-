@@ -5,7 +5,7 @@ from streamlit_autorefresh import st_autorefresh
 from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
-from database import save_tick
+from database import save_tick, load_ticks
 
 APP_ID = st.secrets["APP_ID"]
 API_TOKEN = st.secrets["API_TOKEN"]
@@ -56,16 +56,29 @@ st.sidebar.info(f"Timeframe: {timeframe_name}")
 
 st.divider()
 
+# ---------------- Load Saved Tick History ---------------- #
+
+if "digit_history" not in st.session_state:
+
+    saved_ticks = load_ticks(market)
+
+    if len(saved_ticks) > 1000:
+        saved_ticks = saved_ticks[-1000:]
+
+    st.session_state["digit_history"] = saved_ticks
+
 # ---------------- Live Market ---------------- #
 
 st.subheader("📈 Live Market")
 
 try:
+
     client = DerivClient(APP_ID)
 
     data = client.get_latest_tick(market)
 
     if "error" in data:
+
         st.error(data["error"])
 
     elif "tick" in data:
@@ -73,20 +86,16 @@ try:
         quote = data["tick"]["quote"]
         last_digit = str(quote)[-1]
 
-        # Create digit storage
-        if "digit_history" not in st.session_state:
-            st.session_state["digit_history"] = []
-
         # Save tick in memory
         st.session_state["digit_history"].append(
             int(last_digit)
         )
 
-        # Keep only latest 1000 ticks in memory
+        # Keep only latest 1000 ticks
         if len(st.session_state["digit_history"]) > 1000:
             st.session_state["digit_history"].pop(0)
 
-        # Save tick permanently
+        # Save tick to database
         save_tick(
             market=market,
             price=quote,
@@ -111,7 +120,6 @@ try:
 
         st.success("🟢 Connected to Deriv")
 
-        # Recent digit display
         st.subheader("📊 Recent Digits")
 
         recent_digits = st.session_state["digit_history"][-20:]
@@ -125,9 +133,11 @@ try:
         )
 
     else:
+
         st.error("No tick data received.")
 
 except Exception as e:
+
     st.error(f"Connection Error: {e}")
 
 # ---------------- Pages ---------------- #
