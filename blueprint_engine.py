@@ -24,15 +24,15 @@ class BlueprintEngine:
         self.confidence_engine = ConfidenceEngine()
 
 
-    def analyze(self, history):
+        def analyze(self, history):
 
         # -----------------------------------
         # Minimum history requirement
         # -----------------------------------
 
-         if len(history) < 50:
+        if len(history) < 50:
 
-              return {
+            return {
 
                 "signal": "WAIT",
 
@@ -58,7 +58,7 @@ class BlueprintEngine:
 
         frequency_scores = self.frequency_engine.analyze(
             history
-        )
+        ) 
 
         momentum_scores = self.momentum_engine.analyze(
             history
