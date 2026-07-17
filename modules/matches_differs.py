@@ -7,9 +7,7 @@ def show():
     st.header("📡 NUTEC Blueprint Scanner")
 
     if "digit_history" not in st.session_state:
-
         st.warning("Waiting for live market connection...")
-
         return
 
     history = st.session_state["digit_history"]
@@ -24,13 +22,38 @@ def show():
 
         return
 
-    result = analyze_digits(
-        history,
-        market="Current Market",
-        duration=5
+    st.success("🟢 Scanner Ready")
+
+    st.metric(
+        "Stored Ticks",
+        len(history)
     )
 
-    st.success("🟢 Scanner Ready")
+    st.write("Scanner will only analyse when you press the button below.")
+
+    # ---------------- Scan Button ---------------- #
+
+    if st.button("🔍 SCAN", use_container_width=True):
+
+        result = analyze_digits(
+            history,
+            market="Current Market",
+            duration=5
+        )
+
+        st.session_state["scan_result"] = result
+
+    # ---------------- Show Latest Scan ---------------- #
+
+    if "scan_result" not in st.session_state:
+
+        st.info("No scan performed yet. Press SCAN.")
+
+        return
+
+    result = st.session_state["scan_result"]
+
+    st.divider()
 
     col1, col2 = st.columns(2)
 
@@ -48,14 +71,14 @@ def show():
 
         st.metric(
             "Duration",
-            f'{result["duration"]} Ticks'
+            f"{result['duration']} Ticks"
         )
 
     with col2:
 
         st.metric(
             "Blueprint Score",
-            f'{result["blueprint_score"]:.2f}'
+            f"{result['blueprint_score']:.2f}"
         )
 
         st.metric(
@@ -77,20 +100,8 @@ def show():
     for position, (digit, score) in enumerate(ranking, start=1):
 
         st.write(
-            f"**{position}.** Digit **{digit}** — Blueprint Score **{score:.2f}**"
+            f"**{position}.** Digit **{digit}** — Score **{score:.2f}**"
         )
-
-    st.divider()
-
-    st.subheader("📊 Scanner Status")
-
-    st.success("✓ 1000 historical ticks loaded")
-
-    st.success("✓ Blueprint scoring active")
-
-    st.success("✓ Ranking engine running")
-
-    st.success("✓ Signal generated")
 
     st.divider()
 
