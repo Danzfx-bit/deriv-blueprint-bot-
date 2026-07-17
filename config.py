@@ -1,16 +1,16 @@
 APP_NAME = "deriv blueprint bot"
 
 MARKETS = [
-    "Volatility 10 Index",
-    "1HZ10V",
+    "R_10",
+    "R_10S",
     "R_25",
-    "1HZ25V",
+    "R_25S",
     "R_50",
-    "1HZ50V",
+    "R_50S",
     "R_75",
-    "1HZ75V",
+    "R_75S",
     "R_100",
-    "1HZ100V"
+    "R_100S"
 ]
 
 TIMEFRAMES = [
