@@ -1,5 +1,6 @@
 from deriv_client import DerivClient
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
 from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches
@@ -12,6 +13,12 @@ st.set_page_config(
     page_title=APP_NAME,
     page_icon="📊",
     layout="wide"
+)
+
+# Auto refresh every second for live tick collection
+st_autorefresh(
+    interval=1000,
+    key="tick_refresh"
 )
 
 # ---------------- Sidebar ---------------- #
@@ -61,14 +68,20 @@ try:
         st.error(data["error"])
 
     elif "tick" in data:
+
         quote = data["tick"]["quote"]
         last_digit = str(quote)[-1]
 
+        # Create digit storage
         if "digit_history" not in st.session_state:
             st.session_state["digit_history"] = []
 
-        st.session_state["digit_history"].append(int(last_digit))
+        # Save tick digit
+        st.session_state["digit_history"].append(
+            int(last_digit)
+        )
 
+        # Keep only latest 1000 ticks
         if len(st.session_state["digit_history"]) > 1000:
             st.session_state["digit_history"].pop(0)
 
@@ -77,19 +90,38 @@ try:
         col1, col2 = st.columns(2)
 
         with col1:
-            st.metric("Current Price", quote)
+            st.metric(
+                "Current Price",
+                quote
+            )
 
         with col2:
-            st.metric("Last Digit", last_digit)
+            st.metric(
+                "Last Digit",
+                last_digit
+            )
 
         st.success("🟢 Connected to Deriv")
 
+        # Recent digit display
+        st.subheader("📊 Recent Digits")
+
+        recent_digits = st.session_state["digit_history"][-20:]
+
+        st.write(
+            " ".join(map(str, recent_digits))
+        )
+
+        st.info(
+            f"Ticks collected: {len(st.session_state['digit_history'])}/1000"
+        )
+
     else:
-        st.write(data)
         st.error("No tick data received.")
 
 except Exception as e:
     st.error(f"Connection Error: {e}")
+
 
 # ---------------- Pages ---------------- #
 
