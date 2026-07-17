@@ -16,11 +16,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# Auto refresh every second for live tick collection
+# Auto refresh every 10 seconds
 st_autorefresh(
-    interval=1000,
+    interval=10000,
     key="tick_refresh"
-)
+) 
 
 # ---------------- Sidebar ---------------- #
 
