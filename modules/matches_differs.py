@@ -4,96 +4,106 @@ from signals import analyze_digits
 
 def show():
 
-    st.header("🎯 Matches & Differs")
+    st.header("📡 NUTEC Blueprint Scanner")
 
-    # Check if tick history exists
     if "digit_history" not in st.session_state:
-        st.info("Waiting for live tick data...")
 
-        st.metric("Current Last Digit", "-")
-        st.metric("Recommended Trade", "Waiting")
-        st.metric("Confidence", "0%")
+        st.warning("No tick data available yet.")
 
         return
-
 
     history = st.session_state["digit_history"]
 
+    if len(history) < 100:
 
-    # Wait for enough data
-    if len(history) < 1000:
         st.info(
-            f"Collecting data... ({len(history)}/1000 ticks)"
+            f"Collecting data... ({len(history)}/100 ticks)"
         )
-
-        st.progress(len(history) / 1000)
 
         return
 
+    result = analyze_digits(
+        history,
+        market="Current Market",
+        duration=5
+    )
 
-    # Run analysis from signals.py
-    analysis = analyze_digits(history)
+    signal = result["signal"]
+    digit = result["number"]
+    confidence = result["confidence"]
+    duration = result["duration"]
+    match_probability = result["match_probability"]
+    differ_probability = result["differ_probability"]
 
-
-    st.success("🟢 Blueprint Analysis Ready")
-
+    st.success("🟢 Scanner Active")
 
     col1, col2 = st.columns(2)
 
-
     with col1:
+
         st.metric(
-            "Current Last Digit",
-            analysis["current_digit"]
+            "Signal",
+            signal
+        )
+
+        st.metric(
+            "Target Digit",
+            digit
+        )
+
+        st.metric(
+            "Duration",
+            f"{duration} ticks"
         )
 
     with col2:
+
         st.metric(
-            "Digit Frequency",
-            analysis.get("frequency", "-")
+            "Match Score",
+            f"{match_probability}%"
         )
 
+        st.metric(
+            "Differ Score",
+            f"{differ_probability}%"
+        )
+
+        st.metric(
+            "Confidence",
+            confidence
+        )
 
     st.divider()
 
+    st.subheader("🏆 Top Ranked Digits")
 
-    col3, col4 = st.columns(2)
+    ranking = result["ranking"]
 
+    for position, (digit, score) in enumerate(ranking, start=1):
 
-    with col3:
-        st.metric(
-            "MATCH Probability",
-            f'{analysis["match_probability"]}%'
+        st.write(
+            f"{position}. Digit {digit} → {score}%"
         )
-
-
-    with col4:
-        st.metric(
-            "DIFFER Probability",
-            f'{analysis["differ_probability"]}%'
-        )
-
 
     st.divider()
 
+    st.subheader("📊 Analysis")
+
+    st.write("✓ Historical frequency analysis")
+    st.write("✓ Recent momentum analysis")
+    st.write("✓ Top-ranked digit selection")
+    st.write("✓ Confidence scoring")
+
+    st.divider()
+
+    st.subheader("📈 Tick Statistics")
 
     st.metric(
-        "Recommended Trade",
-        analysis["recommendation"]
+        "Ticks Analysed",
+        len(history)
     )
-
 
     st.metric(
-        "Confidence",
-        f'{analysis["confidence"]}%'
-    )
-
-
-    # Recent digit display
-    st.subheader("📊 Last 20 Digits")
-
-    recent = history[-20:]
-
-    st.write(
-        " ".join(map(str, recent))
+        "Latest Digit",
+        history[-1]
     )
