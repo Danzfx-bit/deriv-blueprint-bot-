@@ -418,6 +418,44 @@ font-size:13px;
 font-weight:600;
 margin-top:10px;
 }
+/* ---------- Native Streamlit widgets (st.success/info/warning/error/metric) ---------- */
+
+.stAlert{
+background:white !important;
+border-radius:14px !important;
+border:1px solid #eee !important;
+box-shadow:0 6px 15px rgba(0,0,0,.12) !important;
+padding:4px 8px !important;
+}
+
+.stAlert p{
+color:#333 !important;
+font-weight:600 !important;
+}
+
+.stAlert svg{
+fill:#D32F2F !important;
+color:#D32F2F !important;
+}
+
+div[data-testid="stMetric"]{
+background:white;
+border-radius:14px;
+padding:16px 18px;
+box-shadow:0 6px 15px rgba(0,0,0,.12);
+}
+
+div[data-testid="stMetricLabel"]{
+color:#999 !important;
+text-transform:uppercase;
+font-size:11px;
+letter-spacing:1px;
+}
+
+div[data-testid="stMetricValue"]{
+color:#1a1a1a !important;
+font-weight:900 !important;
+}
 
 </style>
 """), unsafe_allow_html=True)
