@@ -1,150 +1,216 @@
-import sqlite3
+from prediction_database import PredictionDatabase
 
 
 class HistoricalEngine:
 
     def __init__(self):
 
-        self.db = "ticks.db"
+        self.db = PredictionDatabase()
 
-    # ----------------------------------
+
+    # ---------------------------------------
     # Overall Accuracy
-    # ----------------------------------
+    # ---------------------------------------
 
     def get_overall_accuracy(self):
 
-        conn = sqlite3.connect(self.db)
+        predictions = self.db.get_completed_predictions()
 
-        cursor = conn.cursor()
+        if len(predictions) == 0:
 
-        cursor.execute("""
+            return 0
 
-            SELECT
-                COUNT(*),
-                SUM(correct)
 
-            FROM predictions
+        correct = 0
 
-            WHERE correct IS NOT NULL
+        for prediction in predictions:
 
-        """)
+            if prediction[11] == 1:
 
-        total, wins = cursor.fetchone()
+                correct += 1
 
-        conn.close()
 
-        if total == 0:
+        return round(
 
-            return 50.0
+            (correct / len(predictions)) * 100,
 
-        if wins is None:
-
-            wins = 0
-
-        return round((wins / total) * 100, 2)
-
-    # ----------------------------------
-    # Digit Accuracy
-    # ----------------------------------
-
-    def get_digit_accuracy(self, digit):
-
-        conn = sqlite3.connect(self.db)
-
-        cursor = conn.cursor()
-
-        cursor.execute("""
-
-            SELECT
-                COUNT(*),
-                SUM(correct)
-
-            FROM predictions
-
-            WHERE predicted_digit=?
-            AND correct IS NOT NULL
-
-        """, (digit,))
-
-        total, wins = cursor.fetchone()
-
-        conn.close()
-
-        if total < 20:
-
-            return self.get_overall_accuracy()
-
-        if wins is None:
-
-            wins = 0
-
-        return round((wins / total) * 100, 2)
-
-    # ----------------------------------
-    # Market Accuracy
-    # ----------------------------------
-
-    def get_market_accuracy(self, market):
-
-        conn = sqlite3.connect(self.db)
-
-        cursor = conn.cursor()
-
-        cursor.execute("""
-
-            SELECT
-                COUNT(*),
-                SUM(correct)
-
-            FROM predictions
-
-            WHERE market=?
-            AND correct IS NOT NULL
-
-        """, (market,))
-
-        total, wins = cursor.fetchone()
-
-        conn.close()
-
-        if total < 20:
-
-            return self.get_overall_accuracy()
-
-        if wins is None:
-
-            wins = 0
-
-        return round((wins / total) * 100, 2)
-
-    # ----------------------------------
-    # Combined Historical Probability
-    # ----------------------------------
-
-    def get_probability(
-
-        self,
-
-        digit,
-
-        market
-
-    ):
-
-        overall = self.get_overall_accuracy()
-
-        digit_accuracy = self.get_digit_accuracy(digit)
-
-        market_accuracy = self.get_market_accuracy(market)
-
-        probability = (
-
-            overall * 0.40 +
-
-            digit_accuracy * 0.30 +
-
-            market_accuracy * 0.30
+            2
 
         )
 
-        return round(probability, 2)
+
+    # ---------------------------------------
+    # Accuracy By Digit
+    # ---------------------------------------
+
+    def get_digit_accuracy(
+
+        self,
+
+        digit
+
+    ):
+
+        predictions = self.db.get_predictions_by_digit(
+
+            digit
+
+        )
+
+
+        completed = [
+
+            p for p in predictions
+
+            if p[11] is not None
+
+        ]
+
+
+        if len(completed) == 0:
+
+            return 0
+
+
+        correct = 0
+
+
+        for prediction in completed:
+
+            if prediction[11] == 1:
+
+                correct += 1
+
+
+        return round(
+
+            (correct / len(completed)) * 100,
+
+            2
+
+        )
+
+
+    # ---------------------------------------
+    # Recent Accuracy
+    # ---------------------------------------
+
+    def get_recent_accuracy(
+
+        self,
+
+        limit=100
+
+    ):
+
+        predictions = self.db.get_recent_predictions(
+
+            limit
+
+        )
+
+
+        completed = [
+
+            p for p in predictions
+
+            if p[11] is not None
+
+        ]
+
+
+        if len(completed) == 0:
+
+            return 0
+
+
+        correct = 0
+
+
+        for prediction in completed:
+
+            if prediction[11] == 1:
+
+                correct += 1
+
+
+        return round(
+
+            (correct / len(completed)) * 100,
+
+            2
+
+        )
+
+
+    # ---------------------------------------
+    # Confidence Performance
+    # ---------------------------------------
+
+    def get_confidence_accuracy(
+
+        self,
+
+        minimum_confidence=0
+
+    ):
+
+        predictions = self.db.get_completed_predictions()
+
+
+        filtered = [
+
+            p for p in predictions
+
+            if p[7] >= minimum_confidence
+
+        ]
+
+
+        if len(filtered) == 0:
+
+            return 0
+
+
+        correct = 0
+
+
+        for prediction in filtered:
+
+            if prediction[11] == 1:
+
+                correct += 1
+
+
+        return round(
+
+            (correct / len(filtered)) * 100,
+
+            2
+
+        )
+
+
+    # ---------------------------------------
+    # Full Historical Report
+    # ---------------------------------------
+
+    def analyze(self):
+
+        return {
+
+            "overall_accuracy":
+
+                self.get_overall_accuracy(),
+
+
+            "recent_accuracy":
+
+                self.get_recent_accuracy(),
+
+
+            "confidence_accuracy":
+
+                self.get_confidence_accuracy()
+
+        }
