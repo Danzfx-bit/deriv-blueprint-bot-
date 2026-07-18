@@ -206,10 +206,147 @@ def show_dashboard(market):
 
     with col3:
 
-        metric_card(
+    metric_card(
 
-            "Last Digit",
+        "Last Digit",
 
-            latest_digit
+        latest_digit
 
+    )
+
+    # =================================================
+    # AI Prediction
+    # =================================================
+
+    st.markdown("""
+
+    <div class="bp-section">
+
+        🎯 AI PREDICTION
+
+    </div>
+
+    """, unsafe_allow_html=True)
+
+    prediction = "-"
+
+    confidence = "0%"
+
+    duration = "1 Tick"
+
+    if "scan_result" in st.session_state:
+
+        result = st.session_state["scan_result"]
+
+        prediction = result.get(
+            "target_digit",
+            "-"
         )
+
+        confidence = f"{result.get('confidence', 0)}%"
+
+        duration = f"{result.get('duration', 1)} Tick"
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        metric_card(
+            "Prediction",
+            prediction
+        )
+
+        metric_card(
+            "Duration",
+            duration
+        )
+
+    with col2:
+
+        metric_card(
+            "Confidence",
+            confidence
+        )
+
+        metric_card(
+            "Status",
+            "READY"
+        )
+
+    # =================================================
+    # Learning Engine
+    # =================================================
+
+    st.markdown("""
+
+    <div class="bp-section">
+
+        🧠 LEARNING ENGINE
+
+    </div>
+
+    """, unsafe_allow_html=True)
+
+    stats = learning.db.get_learning_statistics()
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        metric_card(
+            "Predictions",
+            stats["stored"]
+        )
+
+        metric_card(
+            "Accuracy",
+            f"{stats['accuracy']}%"
+        )
+
+    with col2:
+
+        metric_card(
+            "Correct",
+            stats["correct"]
+        )
+
+        metric_card(
+            "Incorrect",
+            stats["incorrect"]
+        )
+
+    with col3:
+
+        metric_card(
+            "Validated",
+            stats["validated"]
+        )
+
+        pending = stats["stored"] - stats["validated"]
+
+        metric_card(
+            "Pending",
+            pending
+        )
+
+    # =================================================
+    # Dashboard Status
+    # =================================================
+
+    st.markdown("""
+
+    <div class="bp-section">
+
+        🚀 SYSTEM STATUS
+
+    </div>
+
+    """, unsafe_allow_html=True)
+
+    if len(history) > 0:
+
+        st.success("🟢 Blueprint Tool is running normally.")
+
+    else:
+
+        st.warning("🟡 Waiting for market data...")
