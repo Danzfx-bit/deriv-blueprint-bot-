@@ -418,3 +418,151 @@ class PredictionDatabase:
         conn.close()
 
         return rows
+     # ---------------------------------------
+    # Total Predictions
+    # ---------------------------------------
+
+    def get_total_predictions(self):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT COUNT(*)
+
+            FROM predictions
+
+        """)
+
+        total = cursor.fetchone()[0]
+
+        conn.close()
+
+        return total
+
+
+    # ---------------------------------------
+    # Total Validated Predictions
+    # ---------------------------------------
+
+    def get_total_validated(self):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT COUNT(*)
+
+            FROM predictions
+
+            WHERE correct IS NOT NULL
+
+        """)
+
+        total = cursor.fetchone()[0]
+
+        conn.close()
+
+        return total
+
+
+    # ---------------------------------------
+    # Total Correct Predictions
+    # ---------------------------------------
+
+    def get_total_correct(self):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT COUNT(*)
+
+            FROM predictions
+
+            WHERE correct = 1
+
+        """)
+
+        total = cursor.fetchone()[0]
+
+        conn.close()
+
+        return total
+
+
+    # ---------------------------------------
+    # Total Incorrect Predictions
+    # ---------------------------------------
+
+    def get_total_incorrect(self):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT COUNT(*)
+
+            FROM predictions
+
+            WHERE correct = 0
+
+        """)
+
+        total = cursor.fetchone()[0]
+
+        conn.close()
+
+        return total
+
+
+    # ---------------------------------------
+    # Learning Accuracy
+    # ---------------------------------------
+
+    def get_accuracy(self):
+
+        validated = self.get_total_validated()
+
+        if validated == 0:
+
+            return 0.0
+
+        correct = self.get_total_correct()
+
+        return round(
+
+            (correct / validated) * 100,
+
+            2
+
+        )
+
+
+    # ---------------------------------------
+    # Learning Statistics
+    # ---------------------------------------
+
+    def get_learning_statistics(self):
+
+        return {
+
+            "stored": self.get_total_predictions(),
+
+            "validated": self.get_total_validated(),
+
+            "correct": self.get_total_correct(),
+
+            "incorrect": self.get_total_incorrect(),
+
+            "accuracy": self.get_accuracy()
+
+        }
