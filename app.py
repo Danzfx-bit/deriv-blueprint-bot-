@@ -73,10 +73,12 @@ st.sidebar.info(
 st.divider()
 
 
-# ---------------- Live Market ---------------- #
-
-st.subheader("📈 Live Market")
-
+# ---------------- Live Market (data fetch only, no display) ---------------- #
+#
+# The dashboard itself (show_dashboard) renders the live market panel,
+# prediction card, and stats. This block just keeps fetching, validating,
+# and saving ticks in the background so that data exists for the dashboard
+# to read on every rerun/autorefresh.
 
 try:
 
@@ -102,30 +104,6 @@ try:
             market,
             quote,
             last_digit
-        )
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            st.metric(
-                "Current Price",
-                quote
-            )
-
-        with col2:
-
-            st.metric(
-                "Last Digit",
-                last_digit
-            )
-
-        st.success(
-            "🟢 Connected to Deriv"
-        )
-
-        st.info(
-            f"Stored Ticks: {get_tick_count(market)}"
         )
 
     else:
