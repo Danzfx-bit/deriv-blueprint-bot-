@@ -1,4 +1,4 @@
-APP_NAME = "NUTEC Blueprint AI"
+APP_NAME = "Blueprint Tool" 
 
 MARKETS = {
     "Volatility 10 Index": "R_10",
