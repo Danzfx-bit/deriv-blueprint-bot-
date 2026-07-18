@@ -21,6 +21,27 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
+📊 Blueprint Intelligence
+
+[Market]     [Timeframe]     [Connection]
+
+--------------------------------
+
+Prediction        Confidence
+   7                 82%
+
+--------------------------------
+
+Market Statistics
+
+Ticks Stored
+Accuracy
+Wins
+Losses
+
+--------------------------------
+
+Learning Engine Status
 
 
 st_autorefresh(
