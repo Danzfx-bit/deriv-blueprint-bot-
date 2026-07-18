@@ -21,27 +21,6 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
-📊 Blueprint Intelligence
-
-[Market]     [Timeframe]     [Connection]
-
---------------------------------
-
-Prediction        Confidence
-   7                 82%
-
---------------------------------
-
-Market Statistics
-
-Ticks Stored
-Accuracy
-Wins
-Losses
-
---------------------------------
-
-Learning Engine Status
 
 
 st_autorefresh(
@@ -61,7 +40,6 @@ market_name = st.sidebar.selectbox(
 )
 
 market = MARKETS[market_name]
-
 
 st.session_state["market"] = market
 
@@ -104,109 +82,63 @@ try:
 
     client = DerivClient(APP_ID)
 
-
     data = client.get_latest_tick(
-
         market
-
     )
-
 
     if "tick" in data:
 
-
         quote = data["tick"]["quote"]
 
-
         last_digit = int(
-
             str(quote)[-1]
-
         )
-
-
-        # --------------------------------
-        # Validate previous prediction
-        # --------------------------------
 
         learning.validate_prediction(
-
             last_digit
-
         )
-
-
-        # --------------------------------
-        # Save live tick
-        # --------------------------------
 
         save_tick(
-
             market,
-
             quote,
-
             last_digit
-
         )
 
-
         col1, col2 = st.columns(2)
-
 
         with col1:
 
             st.metric(
-
                 "Current Price",
-
                 quote
-
             )
-
 
         with col2:
 
             st.metric(
-
                 "Last Digit",
-
                 last_digit
-
             )
 
-
         st.success(
-
             "🟢 Connected to Deriv"
-
         )
-
 
         st.info(
-
             f"Stored Ticks: {get_tick_count(market)}"
-
         )
-
 
     else:
 
         st.error(
-
             "No tick received"
-
         )
-
 
 except Exception as e:
 
     st.error(
-
         f"Connection Error: {e}"
-
     )
-
 
 
 # ---------------- Pages ---------------- #
@@ -214,7 +146,6 @@ except Exception as e:
 if page == "Dashboard":
 
     show_dashboard(market)
-
 
 elif page == "Matches & Differs":
 
