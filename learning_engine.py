@@ -7,9 +7,10 @@ class LearningEngine:
 
         self.db = PredictionDatabase()
 
-    # ----------------------------------------
-    # Save New Prediction
-    # ----------------------------------------
+
+    # ---------------------------------------
+    # Save Prediction
+    # ---------------------------------------
 
     def save_prediction(
 
@@ -53,9 +54,10 @@ class LearningEngine:
 
         )
 
-    # ----------------------------------------
+
+    # ---------------------------------------
     # Validate Prediction
-    # ----------------------------------------
+    # ---------------------------------------
 
     def validate_prediction(
 
@@ -71,80 +73,53 @@ class LearningEngine:
 
         )
 
-    # ----------------------------------------
-    # Prediction Statistics
-    # ----------------------------------------
+
+    # ---------------------------------------
+    # Statistics
+    # ---------------------------------------
 
     def get_total_predictions(self):
 
-        predictions = self.db.load_predictions()
+        return len(
 
-        return len(predictions)
+            self.db.load_predictions()
 
-    def get_correct_predictions(self):
+        )
 
-        predictions = self.db.load_predictions()
 
-        wins = 0
+    def get_completed_predictions(self):
 
-        for row in predictions:
+        return len(
 
-            if row[11] == 1:
+            self.db.get_completed_predictions()
 
-                wins += 1
+        )
 
-        return wins
-
-    def get_wrong_predictions(self):
-
-        predictions = self.db.load_predictions()
-
-        losses = 0
-
-        for row in predictions:
-
-            if row[11] == 0:
-
-                losses += 1
-
-        return losses
 
     def get_accuracy(self):
 
-        total = self.get_total_predictions()
+        predictions = self.db.get_completed_predictions()
 
-        if total == 0:
+
+        if len(predictions) == 0:
 
             return 0
 
-        wins = self.get_correct_predictions()
+
+        correct = 0
+
+
+        for prediction in predictions:
+
+            if prediction[11] == 1:
+
+                correct += 1
+
 
         return round(
 
-            wins / total * 100,
+            (correct / len(predictions)) * 100,
 
             2
 
         )
-
-    # ----------------------------------------
-    # Future AI Training
-    # ----------------------------------------
-
-    def train(self):
-
-        """
-        Placeholder.
-
-        Future versions of NUTEC will use this
-        method to learn from historical data.
-
-        Planned features:
-
-        - Pattern learning
-        - Market clustering
-        - Confidence calibration
-        - Adaptive weighting
-        """
-
-        pass
