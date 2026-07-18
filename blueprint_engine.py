@@ -28,8 +28,6 @@ class BlueprintEngine:
 
             return {
 
-                "signal": "WAIT",
-
                 "number": "-",
 
                 "target_digit": "-",
@@ -48,7 +46,7 @@ class BlueprintEngine:
 
 
         # -----------------------------------
-        # Run Analysis Engines
+        # Run Engines
         # -----------------------------------
 
         frequency_scores = self.frequency_engine.analyze(
@@ -73,7 +71,7 @@ class BlueprintEngine:
 
 
         # -----------------------------------
-        # Combine Blueprint Scores
+        # Combine Scores
         # -----------------------------------
 
         blueprint_scores = {}
@@ -84,7 +82,9 @@ class BlueprintEngine:
 
             frequency = frequency_scores.get(
 
-                digit, {}
+                digit,
+
+                {}
 
             ).get(
 
@@ -97,7 +97,9 @@ class BlueprintEngine:
 
             momentum = momentum_scores.get(
 
-                digit, {}
+                digit,
+
+                {}
 
             ).get(
 
@@ -110,7 +112,9 @@ class BlueprintEngine:
 
             transition = transition_scores.get(
 
-                digit, {}
+                digit,
+
+                {}
 
             ).get(
 
@@ -136,15 +140,21 @@ class BlueprintEngine:
 
             blueprint_scores[digit] = {
 
+
                 "frequency": frequency,
+
 
                 "momentum": momentum,
 
+
                 "transition": transition,
+
 
                 "blueprint_score": total
 
+
             }
+
 
 
         # -----------------------------------
@@ -170,8 +180,9 @@ class BlueprintEngine:
         best_score = ranking[0][1]["blueprint_score"]
 
 
+
         # -----------------------------------
-        # New Historical Confidence
+        # Historical Confidence
         # -----------------------------------
 
         confidence_result = self.confidence_engine.analyze(
@@ -188,39 +199,16 @@ class BlueprintEngine:
         confidence = confidence_result["confidence"]
 
 
-        # -----------------------------------
-        # Signal Decision
-        # -----------------------------------
-
-        if confidence >= 80:
-
-            signal = "STRONG MATCH"
-
-
-        elif confidence >= 60:
-
-            signal = "MATCH"
-
-
-        elif confidence >= 40:
-
-            signal = "WATCH"
-
-
-        else:
-
-            signal = "WAIT"
-
-
 
         # -----------------------------------
-        # Final Ranking
+        # Format Ranking
         # -----------------------------------
 
         final_ranking = []
 
 
         for digit, values in ranking:
+
 
             final_ranking.append(
 
@@ -241,30 +229,38 @@ class BlueprintEngine:
             )
 
 
+
         # -----------------------------------
         # Details
         # -----------------------------------
 
         details = {
 
+
             "frequency": frequency_scores,
+
 
             "momentum": momentum_scores,
 
+
             "transition": transition_scores,
+
 
             "blueprint": blueprint_scores,
 
+
             "confidence": confidence_result
+
 
         }
 
 
 
+        # -----------------------------------
+        # Final Prediction
+        # -----------------------------------
+
         return {
-
-
-            "signal": signal,
 
 
             "number": best_digit,
