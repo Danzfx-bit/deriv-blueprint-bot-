@@ -30,7 +30,18 @@ def _h(s):
 # Dashboard Theme
 # =====================================================
 
-st.markdown(_h("""
+def _inject_css():
+    """
+    Re-inject the theme CSS on every rerun.
+
+    This must be called from inside show_dashboard() rather than left
+    as module-level code: Streamlit reruns the whole script on every
+    autorefresh, but Python only executes a module's top-level code
+    once (on first import). If the <style> block were top-level, it
+    would only ever render on the very first load and disappear on
+    every subsequent autorefresh.
+    """
+    st.markdown(_h("""
 <style>
 
 .stApp{
@@ -415,6 +426,7 @@ margin-top:10px;
 # =====================================================
 # Card helpers
 # =====================================================
+# (see _inject_css above, called at the top of show_dashboard)
 
 def metric_card(title, value):
     st.markdown(
@@ -459,6 +471,8 @@ def confidence_donut(confidence):
 # =====================================================
 
 def show_dashboard(market):
+
+    _inject_css()
 
     ticks = get_tick_count(market)
 
@@ -701,4 +715,3 @@ def show_dashboard(market):
         """),
         unsafe_allow_html=True
     )
-
