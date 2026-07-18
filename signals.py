@@ -24,8 +24,11 @@ def analyze_digits(
     target = result["target_digit"]
 
 
-    if result["confidence"] > 0:
+    # ---------------------------------------
+    # Save every valid prediction
+    # ---------------------------------------
 
+    if target != "-":
 
         blueprint_data = (
 
