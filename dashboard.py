@@ -15,92 +15,89 @@ learning = LearningEngine()
 # Dashboard Theme
 # =====================================================
 
-st.markdown(
-    """
-    <style>
+st.markdown("""
+<style>
 
-    .bp-card{
+.bp-card{
 
-        background:white;
+    background:white;
 
-        border-radius:18px;
+    border-radius:18px;
 
-        padding:20px;
+    padding:20px;
 
-        box-shadow:0 6px 15px rgba(0,0,0,.15);
+    box-shadow:0 6px 15px rgba(0,0,0,.15);
 
-        margin-bottom:20px;
+    margin-bottom:20px;
 
-    }
+}
 
-    .bp-title{
+.bp-title{
 
-        font-size:34px;
+    font-size:34px;
 
-        font-weight:800;
+    font-weight:800;
 
-        color:#1E1E1E;
+    color:#1E1E1E;
 
-        margin-bottom:5px;
+    margin-bottom:5px;
 
-    }
+}
 
-    .bp-subtitle{
+.bp-subtitle{
 
-        font-size:16px;
+    font-size:16px;
 
-        color:#666666;
+    color:#666666;
 
-        margin-bottom:25px;
+    margin-bottom:20px;
 
-    }
+}
 
-    .bp-section{
+.bp-section{
 
-        font-size:20px;
+    font-size:20px;
 
-        font-weight:700;
+    font-weight:700;
 
-        color:#D32F2F;
+    color:#D32F2F;
 
-        margin-bottom:15px;
+    margin-bottom:15px;
 
-    }
+}
 
-    .bp-value{
+.bp-value{
 
-        font-size:36px;
+    font-size:36px;
 
-        font-weight:800;
+    font-weight:800;
 
-        color:#1E1E1E;
+    color:#1E1E1E;
 
-    }
+}
 
-    .bp-label{
+.bp-label{
 
-        font-size:14px;
+    font-size:14px;
 
-        color:#666666;
+    color:#666666;
 
-        text-transform:uppercase;
+    text-transform:uppercase;
 
-    }
+}
 
-    .bp-status{
+.bp-status{
 
-        color:#2E7D32;
+    color:#2E7D32;
 
-        font-weight:700;
+    font-weight:700;
 
-        font-size:16px;
+    font-size:16px;
 
-    }
+}
 
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+</style>
+""", unsafe_allow_html=True)
 
 
 # =====================================================
@@ -126,3 +123,93 @@ def metric_card(title, value):
         unsafe_allow_html=True
 
     )
+
+
+# =====================================================
+# Dashboard
+# =====================================================
+
+def show_dashboard(market):
+
+    ticks = get_tick_count(market)
+
+    history = load_ticks(
+        market,
+        limit=100
+    )
+
+    latest_digit = "-"
+
+    if len(history) > 0:
+
+        latest_digit = history[-1]
+
+    # =================================================
+    # Header
+    # =================================================
+
+    st.markdown("""
+
+    <div class="bp-card">
+
+        <div class="bp-title">
+
+            🧠 Blueprint Tool
+
+        </div>
+
+        <div class="bp-subtitle">
+
+            AI Powered Prediction Engine
+
+        </div>
+
+    </div>
+
+    """, unsafe_allow_html=True)
+
+    # =================================================
+    # Live Market
+    # =================================================
+
+    st.markdown("""
+
+    <div class="bp-section">
+
+        📈 LIVE MARKET
+
+    </div>
+
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        metric_card(
+
+            "Market",
+
+            market
+
+        )
+
+    with col2:
+
+        metric_card(
+
+            "Stored Ticks",
+
+            ticks
+
+        )
+
+    with col3:
+
+        metric_card(
+
+            "Last Digit",
+
+            latest_digit
+
+        )
