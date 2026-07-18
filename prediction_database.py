@@ -199,13 +199,9 @@ class PredictionDatabase:
 
         prediction_id = row[0]
 
-        predicted = row[1]
+        predicted_digit = row[1]
 
-        correct = int(
-
-            predicted == actual_digit
-
-        )
+        correct = int(predicted_digit == actual_digit)
 
         cursor.execute(
 
@@ -258,6 +254,164 @@ class PredictionDatabase:
             ORDER BY id DESC
 
         """)
+
+        rows = cursor.fetchall()
+
+        conn.close()
+
+        return rows
+
+    # ---------------------------------------
+    # Completed Predictions
+    # ---------------------------------------
+
+    def get_completed_predictions(self):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT *
+
+            FROM predictions
+
+            WHERE correct IS NOT NULL
+
+            ORDER BY id DESC
+
+        """)
+
+        rows = cursor.fetchall()
+
+        conn.close()
+
+        return rows
+
+    # ---------------------------------------
+    # Pending Predictions
+    # ---------------------------------------
+
+    def get_pending_predictions(self):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT *
+
+            FROM predictions
+
+            WHERE correct IS NULL
+
+            ORDER BY id ASC
+
+        """)
+
+        rows = cursor.fetchall()
+
+        conn.close()
+
+        return rows
+
+    # ---------------------------------------
+    # Predictions By Digit
+    # ---------------------------------------
+
+    def get_predictions_by_digit(
+
+        self,
+
+        digit
+
+    ):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT *
+
+            FROM predictions
+
+            WHERE predicted_digit=?
+
+            ORDER BY id DESC
+
+        """, (digit,))
+
+        rows = cursor.fetchall()
+
+        conn.close()
+
+        return rows
+
+    # ---------------------------------------
+    # Recent Predictions
+    # ---------------------------------------
+
+    def get_recent_predictions(
+
+        self,
+
+        limit=100
+
+    ):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT *
+
+            FROM predictions
+
+            ORDER BY id DESC
+
+            LIMIT ?
+
+        """, (limit,))
+
+        rows = cursor.fetchall()
+
+        conn.close()
+
+        return rows
+
+    # ---------------------------------------
+    # Predictions By Market
+    # ---------------------------------------
+
+    def get_predictions_by_market(
+
+        self,
+
+        market
+
+    ):
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+
+            SELECT *
+
+            FROM predictions
+
+            WHERE market=?
+
+            ORDER BY id DESC
+
+        """, (market,))
 
         rows = cursor.fetchall()
 
