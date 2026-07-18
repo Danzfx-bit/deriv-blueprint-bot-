@@ -6,6 +6,10 @@ from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
 from database import save_tick, get_tick_count
+from learning_engine import LearningEngine
+
+
+learning = LearningEngine()
 
 
 APP_ID = st.secrets["APP_ID"]
@@ -19,7 +23,6 @@ st.set_page_config(
 )
 
 
-# Refresh every 10 seconds
 st_autorefresh(
     interval=10000,
     key="tick_refresh"
@@ -39,7 +42,6 @@ market_name = st.sidebar.selectbox(
 market = MARKETS[market_name]
 
 
-# Pass market to scanner
 st.session_state["market"] = market
 
 
@@ -81,23 +83,50 @@ try:
 
     client = DerivClient(APP_ID)
 
+
     data = client.get_latest_tick(
+
         market
+
     )
 
 
     if "tick" in data:
 
+
         quote = data["tick"]["quote"]
 
-        last_digit = str(quote)[-1]
+
+        last_digit = int(
+
+            str(quote)[-1]
+
+        )
 
 
-        # Save ONLY to database
-        save_tick(
-            market,
-            quote,
+        # --------------------------------
+        # Validate previous prediction
+        # --------------------------------
+
+        learning.validate_prediction(
+
             last_digit
+
+        )
+
+
+        # --------------------------------
+        # Save live tick
+        # --------------------------------
+
+        save_tick(
+
+            market,
+
+            quote,
+
+            last_digit
+
         )
 
 
@@ -107,40 +136,54 @@ try:
         with col1:
 
             st.metric(
+
                 "Current Price",
+
                 quote
+
             )
 
 
         with col2:
 
             st.metric(
+
                 "Last Digit",
+
                 last_digit
+
             )
 
 
         st.success(
+
             "🟢 Connected to Deriv"
+
         )
 
 
         st.info(
+
             f"Stored Ticks: {get_tick_count(market)}"
+
         )
 
 
     else:
 
         st.error(
+
             "No tick received"
+
         )
 
 
 except Exception as e:
 
     st.error(
+
         f"Connection Error: {e}"
+
     )
 
 
@@ -149,7 +192,7 @@ except Exception as e:
 
 if page == "Dashboard":
 
-    show_dashboard(market) 
+    show_dashboard(market)
 
 
 elif page == "Matches & Differs":
