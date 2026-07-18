@@ -457,6 +457,43 @@ color:#1a1a1a !important;
 font-weight:900 !important;
 }
 
+/* ---------- Sidebar ---------- */
+
+section[data-testid="stSidebar"]{
+background:#12172B;
+}
+
+section[data-testid="stSidebar"] *{
+color:#f0f0f5 !important;
+}
+
+section[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"]{
+background:white;
+border-radius:10px;
+}
+
+section[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] *{
+color:#1a1a1a !important;
+}
+
+section[data-testid="stSidebar"] .stRadio label{
+color:#f0f0f5 !important;
+}
+
+section[data-testid="stSidebar"] .stAlert{
+background:rgba(255,255,255,.08) !important;
+border:1px solid rgba(255,255,255,.15) !important;
+box-shadow:none !important;
+}
+
+section[data-testid="stSidebar"] .stAlert p{
+color:#f0f0f5 !important;
+}
+
+section[data-testid="stSidebar"] hr{
+border-color:rgba(255,255,255,.15) !important;
+}
+
 </style>
 """), unsafe_allow_html=True)
 
