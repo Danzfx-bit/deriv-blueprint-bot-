@@ -11,12 +11,14 @@ learning = LearningEngine()
 def analyze_digits(
     history,
     market="Unknown",
-    duration=5
+    duration=1
 ):
 
     result = blueprint.analyze(history)
 
     if result["signal"] != "WAIT":
+
+        target = result["target_digit"]
 
         save_signal(
 
@@ -24,9 +26,9 @@ def analyze_digits(
 
             signal=result["signal"],
 
-            digit=result["number"],
+            digit=target,
 
-            probability=result["blueprint_score"],
+            probability=result["confidence"],
 
             duration=duration
 
@@ -36,9 +38,13 @@ def analyze_digits(
 
             market=market,
 
-            predicted_digit=result["number"],
+            predicted_digit=target,
 
-            blueprint_score=result["blueprint_score"],
+            frequency_score=result["details"]["blueprint"][target]["frequency"],
+
+            momentum_score=result["details"]["blueprint"][target]["momentum"],
+
+            transition_score=result["details"]["blueprint"][target]["transition"],
 
             confidence=result["confidence"],
 
