@@ -28,7 +28,11 @@ class LearningEngine:
 
             predicted_digit INTEGER,
 
-            blueprint_score REAL,
+            frequency_score REAL,
+
+            momentum_score REAL,
+
+            transition_score REAL,
 
             confidence REAL,
 
@@ -57,7 +61,11 @@ class LearningEngine:
 
         predicted_digit,
 
-        blueprint_score,
+        frequency_score,
+
+        momentum_score,
+
+        transition_score,
 
         confidence,
 
@@ -81,7 +89,11 @@ class LearningEngine:
 
                 predicted_digit,
 
-                blueprint_score,
+                frequency_score,
+
+                momentum_score,
+
+                transition_score,
 
                 confidence,
 
@@ -95,7 +107,7 @@ class LearningEngine:
 
             )
 
-            VALUES (?, ?, ?, ?, ?, ?, NULL, NULL)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)
 
             """,
 
@@ -105,7 +117,11 @@ class LearningEngine:
 
                 predicted_digit,
 
-                blueprint_score,
+                frequency_score,
+
+                momentum_score,
+
+                transition_score,
 
                 confidence,
 
@@ -233,13 +249,9 @@ class LearningEngine:
 
         )
 
-        row = cursor.fetchone()
+        total, wins = cursor.fetchone()
 
         conn.close()
-
-        total = row[0]
-
-        wins = row[1]
 
         if total == 0:
 
