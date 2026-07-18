@@ -494,6 +494,29 @@ section[data-testid="stSidebar"] hr{
 border-color:rgba(255,255,255,.15) !important;
 }
 
+/* ---------- Native buttons ---------- */
+
+.stButton > button{
+background:#D32F2F !important;
+color:white !important;
+border:none !important;
+border-radius:12px !important;
+font-weight:800 !important;
+padding:12px 20px !important;
+box-shadow:0 6px 15px rgba(0,0,0,.15) !important;
+}
+
+.stButton > button:hover{
+background:#B71C1C !important;
+color:white !important;
+}
+
+/* ---------- Progress bar ---------- */
+
+div[data-testid="stProgress"] > div > div > div{
+background-color:#D32F2F !important;
+}
+
 </style>
 """), unsafe_allow_html=True)
 
