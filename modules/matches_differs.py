@@ -2,6 +2,7 @@ import streamlit as st
 
 from signals import analyze_digits
 from database import load_ticks
+from prediction_database import PredictionDatabase
 
 
 MIN_TICKS = 50
@@ -78,6 +79,11 @@ def show():
     result = st.session_state["scan_result"]
 
 
+    db = PredictionDatabase()
+
+    stats = db.get_learning_statistics()
+
+
     st.divider()
 
 
@@ -107,6 +113,60 @@ def show():
         st.metric(
             "Ticks Analysed",
             len(history)
+        )
+
+
+    st.divider()
+
+
+    st.subheader("🧠 Learning Engine")
+
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
+
+        st.metric(
+            "Predictions Stored",
+            stats["stored"]
+        )
+
+        st.metric(
+            "Validated",
+            stats["validated"]
+        )
+
+
+    with col2:
+
+        st.metric(
+            "Correct",
+            stats["correct"]
+        )
+
+        st.metric(
+            "Incorrect",
+            stats["incorrect"]
+        )
+
+
+    with col3:
+
+        st.metric(
+            "Accuracy",
+            f"{stats['accuracy']}%"
+        )
+
+        pending = (
+            stats["stored"]
+            -
+            stats["validated"]
+        )
+
+        st.metric(
+            "Pending",
+            pending
         )
 
 
