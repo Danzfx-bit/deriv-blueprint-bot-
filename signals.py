@@ -18,33 +18,24 @@ def analyze_digits(
 
 ):
 
-
     result = blueprint.analyze(history)
 
 
-    if result["signal"] != "WAIT":
+    target = result["target_digit"]
 
 
-        target = result["target_digit"]
+    if result["confidence"] > 0:
 
 
-        blueprint_data = result.get(
+        blueprint_data = (
 
-            "details",
+            result
 
-            {}
+            .get("details", {})
 
-        ).get(
+            .get("blueprint", {})
 
-            "blueprint",
-
-            {}
-
-        ).get(
-
-            target,
-
-            {}
+            .get(target, {})
 
         )
 
@@ -53,7 +44,7 @@ def analyze_digits(
 
             market=market,
 
-            signal=result["signal"],
+            signal="PREDICTION",
 
             digit=target,
 
@@ -96,7 +87,7 @@ def analyze_digits(
 
             confidence=result["confidence"],
 
-            signal=result["signal"],
+            signal="PREDICTION",
 
             duration=duration
 
