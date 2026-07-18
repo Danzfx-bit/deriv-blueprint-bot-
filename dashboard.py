@@ -12,280 +12,293 @@ from learning_engine import LearningEngine
 learning = LearningEngine()
 
 
+def _h(s):
+    """
+    Strip leading whitespace from every line of an HTML/CSS string.
+
+    Streamlit's markdown renderer will treat any line that starts with
+    4+ spaces as an indented code block and print it as literal text
+    instead of rendering it. Since Python f-strings built inside
+    indented functions naturally pick up that leading whitespace, we
+    normalize every block here before it reaches st.markdown().
+    """
+    lines = [line.strip() for line in s.strip("\n").split("\n")]
+    return "\n".join(lines)
+
+
 # =====================================================
 # Dashboard Theme
 # =====================================================
 
-st.markdown("""
+st.markdown(_h("""
 <style>
 
 .stApp{
-    background:#9598A1;
+background:#9598A1;
 }
 
 .block-container{
-    padding-top:1rem;
-    max-width:1200px;
+padding-top:1rem;
+max-width:1200px;
 }
 
 /* ---------- Header ---------- */
 
 .bp-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
 }
 
 .bp-title{
-    font-size:36px;
-    font-weight:900;
-    color:#1a1a1a;
-    letter-spacing:1px;
-    margin:0;
+font-size:36px;
+font-weight:900;
+color:#1a1a1a;
+letter-spacing:1px;
+margin:0;
 }
 
 .bp-subtitle{
-    font-size:13px;
-    color:#666;
-    letter-spacing:2px;
-    font-weight:600;
-    margin-top:-4px;
+font-size:13px;
+color:#666;
+letter-spacing:2px;
+font-weight:600;
+margin-top:-4px;
 }
 
 .bp-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    background:#e9e9e9;
-    color:#333;
-    font-weight:700;
-    font-size:13px;
-    padding:10px 18px;
-    border-radius:10px;
+display:inline-flex;
+align-items:center;
+gap:8px;
+background:#e9e9e9;
+color:#333;
+font-weight:700;
+font-size:13px;
+padding:10px 18px;
+border-radius:10px;
 }
 
 .bp-dot{
-    width:8px;
-    height:8px;
-    border-radius:50%;
-    background:#2ecc71;
-    display:inline-block;
+width:8px;
+height:8px;
+border-radius:50%;
+background:#2ecc71;
+display:inline-block;
 }
 
 /* ---------- Cards ---------- */
 
 .bp-card{
-    background:white;
-    border-radius:18px;
-    padding:22px 24px;
-    margin-bottom:20px;
-    box-shadow:0 6px 15px rgba(0,0,0,.15);
+background:white;
+border-radius:18px;
+padding:22px 24px;
+margin-bottom:20px;
+box-shadow:0 6px 15px rgba(0,0,0,.15);
 }
 
 .bp-card-title{
-    font-size:15px;
-    font-weight:800;
-    color:#222;
-    margin-bottom:16px;
-    display:flex;
-    align-items:center;
-    gap:8px;
+font-size:15px;
+font-weight:800;
+color:#222;
+margin-bottom:16px;
+display:flex;
+align-items:center;
+gap:8px;
 }
 
 .bp-card-title .accent{
-    color:#D32F2F;
+color:#D32F2F;
 }
 
 .bp-label{
-    font-size:11px;
-    color:#999;
-    text-transform:uppercase;
-    letter-spacing:1px;
-    margin-bottom:4px;
+font-size:11px;
+color:#999;
+text-transform:uppercase;
+letter-spacing:1px;
+margin-bottom:4px;
 }
 
 .bp-value{
-    font-size:26px;
-    font-weight:900;
-    color:#1a1a1a;
+font-size:26px;
+font-weight:900;
+color:#1a1a1a;
 }
 
 /* ---------- Live market dark panel ---------- */
 
 .bp-market{
-    background:#12172B;
-    border-radius:18px;
-    padding:24px 28px;
-    margin-bottom:20px;
-    color:white;
+background:#12172B;
+border-radius:18px;
+padding:24px 28px;
+margin-bottom:20px;
+color:white;
 }
 
 .bp-live-row{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    color:#D32F2F;
-    font-weight:800;
-    font-size:13px;
-    letter-spacing:1px;
-    margin-bottom:18px;
+display:flex;
+align-items:center;
+gap:8px;
+color:#D32F2F;
+font-weight:800;
+font-size:13px;
+letter-spacing:1px;
+margin-bottom:18px;
 }
 
 .bp-live-dot{
-    width:9px;
-    height:9px;
-    border-radius:50%;
-    background:#D32F2F;
-    display:inline-block;
-    animation:pulse 1.4s infinite;
+width:9px;
+height:9px;
+border-radius:50%;
+background:#D32F2F;
+display:inline-block;
+animation:pulse 1.4s infinite;
 }
 
 @keyframes pulse{
-    0%{opacity:1;}
-    50%{opacity:.3;}
-    100%{opacity:1;}
+0%{opacity:1;}
+50%{opacity:.3;}
+100%{opacity:1;}
 }
 
 .bp-market-grid{
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:20px;
+display:flex;
+justify-content:space-between;
+flex-wrap:wrap;
+gap:20px;
 }
 
 .bp-market-label{
-    font-size:11px;
-    color:#8a8f a8;
-    text-transform:uppercase;
-    letter-spacing:1px;
-    margin-bottom:6px;
-    color:#9aa0b5;
+font-size:11px;
+text-transform:uppercase;
+letter-spacing:1px;
+margin-bottom:6px;
+color:#9aa0b5;
 }
 
 .bp-market-value{
-    font-size:26px;
-    font-weight:900;
-    color:white;
+font-size:26px;
+font-weight:900;
+color:white;
 }
 
 .bp-market-sub{
-    font-size:11px;
-    color:#7c8299;
-    margin-top:4px;
+font-size:11px;
+color:#7c8299;
+margin-top:4px;
 }
 
 .bp-digit-big{
-    font-size:40px;
-    font-weight:900;
-    color:#D32F2F;
+font-size:40px;
+font-weight:900;
+color:#D32F2F;
 }
 
 /* ---------- Prediction card ---------- */
 
 .bp-prediction-num{
-    font-size:100px;
-    font-weight:900;
-    color:#D32F2F;
-    text-align:center;
-    line-height:1;
-    margin:10px 0 20px 0;
+font-size:100px;
+font-weight:900;
+color:#D32F2F;
+text-align:center;
+line-height:1;
+margin:10px 0 20px 0;
 }
 
 .bp-tag{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    background:#FDE8E8;
-    color:#D32F2F;
-    font-weight:700;
-    font-size:13px;
-    padding:8px 16px;
-    border-radius:10px;
+display:inline-flex;
+align-items:center;
+gap:6px;
+background:#FDE8E8;
+color:#D32F2F;
+font-weight:700;
+font-size:13px;
+padding:8px 16px;
+border-radius:10px;
 }
 
 .bp-button-red{
-    background:#D32F2F;
-    color:white;
-    text-align:center;
-    font-weight:800;
-    font-size:14px;
-    padding:14px;
-    border-radius:12px;
-    margin-top:16px;
+background:#D32F2F;
+color:white;
+text-align:center;
+font-weight:800;
+font-size:14px;
+padding:14px;
+border-radius:12px;
+margin-top:16px;
 }
 
 .bp-banner{
-    background:#FDE8E8;
-    color:#D32F2F;
-    text-align:center;
-    font-weight:700;
-    font-size:13px;
-    padding:12px;
-    border-radius:12px;
-    margin-top:16px;
+background:#FDE8E8;
+color:#D32F2F;
+text-align:center;
+font-weight:700;
+font-size:13px;
+padding:12px;
+border-radius:12px;
+margin-top:16px;
 }
 
 /* ---------- Confidence donut ---------- */
 
 .bp-donut-wrap{
-    display:flex;
-    justify-content:center;
-    margin:10px 0 20px 0;
+display:flex;
+justify-content:center;
+margin:10px 0 20px 0;
 }
 
 .bp-donut{
-    width:190px;
-    height:190px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+width:190px;
+height:190px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
 }
 
 .bp-donut-inner{
-    width:150px;
-    height:150px;
-    border-radius:50%;
-    background:white;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
+width:150px;
+height:150px;
+border-radius:50%;
+background:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
 }
 
 .bp-donut-pct{
-    font-size:34px;
-    font-weight:900;
-    color:#1a1a1a;
+font-size:34px;
+font-weight:900;
+color:#1a1a1a;
 }
 
 .bp-donut-lbl{
-    font-size:12px;
-    font-weight:800;
-    color:#666;
-    letter-spacing:1px;
+font-size:12px;
+font-weight:800;
+color:#666;
+letter-spacing:1px;
 }
 
 /* ---------- Learning engine grid ---------- */
 
 .bp-mini-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:14px;
-    margin-bottom:16px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:14px;
+margin-bottom:16px;
 }
 
 .bp-mini-box{
-    background:#F6F6F8;
-    border-radius:14px;
-    padding:16px;
+background:#F6F6F8;
+border-radius:14px;
+padding:16px;
 }
 
 .bp-mini-value{
-    font-size:26px;
-    font-weight:900;
-    color:#1a1a1a;
+font-size:26px;
+font-weight:900;
+color:#1a1a1a;
 }
 
 .bp-mini-value.green{ color:#2ecc71; }
@@ -295,108 +308,108 @@ st.markdown("""
 /* ---------- Statistics rows ---------- */
 
 .bp-stat-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:12px 0;
-    border-bottom:1px solid #eee;
-    font-size:14px;
-    font-weight:600;
-    color:#333;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px 0;
+border-bottom:1px solid #eee;
+font-size:14px;
+font-weight:600;
+color:#333;
 }
 
 .bp-stat-row:last-child{
-    border-bottom:none;
+border-bottom:none;
 }
 
 .bp-stat-val{
-    font-weight:800;
-    color:#1a1a1a;
+font-weight:800;
+color:#1a1a1a;
 }
 
 /* ---------- Ranked digits ---------- */
 
 .bp-rank-row{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:14px;
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:14px;
 }
 
 .bp-rank-num{
-    width:22px;
-    font-weight:800;
-    color:#999;
-    font-size:13px;
+width:22px;
+font-weight:800;
+color:#999;
+font-size:13px;
 }
 
 .bp-rank-digit{
-    width:26px;
-    font-weight:900;
-    color:#1a1a1a;
-    font-size:15px;
+width:26px;
+font-weight:900;
+color:#1a1a1a;
+font-size:15px;
 }
 
 .bp-rank-bar-bg{
-    flex:1;
-    background:#eee;
-    height:10px;
-    border-radius:6px;
-    overflow:hidden;
+flex:1;
+background:#eee;
+height:10px;
+border-radius:6px;
+overflow:hidden;
 }
 
 .bp-rank-bar-fill{
-    background:#D32F2F;
-    height:10px;
-    border-radius:6px;
+background:#D32F2F;
+height:10px;
+border-radius:6px;
 }
 
 .bp-rank-pct{
-    width:36px;
-    text-align:right;
-    font-size:13px;
-    font-weight:700;
-    color:#555;
+width:36px;
+text-align:right;
+font-size:13px;
+font-weight:700;
+color:#555;
 }
 
 /* ---------- Recent digits grid ---------- */
 
 .bp-digit-grid{
-    display:grid;
-    grid-template-columns:repeat(10,1fr);
-    gap:8px;
+display:grid;
+grid-template-columns:repeat(10,1fr);
+gap:8px;
 }
 
 .bp-digit-chip{
-    background:#F6F6F8;
-    color:#333;
-    font-weight:800;
-    font-size:14px;
-    text-align:center;
-    padding:10px 0;
-    border-radius:8px;
+background:#F6F6F8;
+color:#333;
+font-weight:800;
+font-size:14px;
+text-align:center;
+padding:10px 0;
+border-radius:8px;
 }
 
 .bp-digit-chip.active{
-    background:#D32F2F;
-    color:white;
+background:#D32F2F;
+color:white;
 }
 
 /* ---------- Footer ---------- */
 
 .bp-footer{
-    background:#12172B;
-    color:#9aa0b5;
-    text-align:center;
-    padding:14px;
-    border-radius:14px;
-    font-size:13px;
-    font-weight:600;
-    margin-top:10px;
+background:#12172B;
+color:#9aa0b5;
+text-align:center;
+padding:14px;
+border-radius:14px;
+font-size:13px;
+font-weight:600;
+margin-top:10px;
 }
 
 </style>
-""", unsafe_allow_html=True)
+"""), unsafe_allow_html=True)
 
 
 # =====================================================
@@ -405,12 +418,12 @@ st.markdown("""
 
 def metric_card(title, value):
     st.markdown(
-        f"""
+        _h(f"""
         <div class="bp-card">
             <div class="bp-label">{title}</div>
             <div class="bp-value">{value}</div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True
     )
 
@@ -427,7 +440,7 @@ def confidence_donut(confidence):
         label = "MEDIUM CONFIDENCE"
 
     st.markdown(
-        f"""
+        _h(f"""
         <div class="bp-donut-wrap">
             <div class="bp-donut" style="background:conic-gradient(#D32F2F {angle}deg, #e6e6e6 {angle}deg);">
                 <div class="bp-donut-inner">
@@ -436,7 +449,7 @@ def confidence_donut(confidence):
                 </div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True
     )
 
@@ -464,7 +477,7 @@ def show_dashboard(market):
     # =====================================================
 
     st.markdown(
-        f"""
+        _h(f"""
         <div class="bp-header">
             <div>
                 <div class="bp-title">BLUEPRINT TOOL</div>
@@ -474,11 +487,11 @@ def show_dashboard(market):
                 <div class="bp-badge"><span class="bp-dot"></span> DERIV API &nbsp; LIVE</div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True
     )
 
-    refresh_col, _ = st.columns([1, 5])
+    refresh_col, _unused = st.columns([1, 5])
     with refresh_col:
         if st.button("🔄 Refresh"):
             st.rerun()
@@ -488,7 +501,7 @@ def show_dashboard(market):
     # =====================================================
 
     st.markdown(
-        f"""
+        _h(f"""
         <div class="bp-market">
             <div class="bp-live-row"><span class="bp-live-dot"></span> LIVE MARKET</div>
             <div class="bp-market-grid">
@@ -506,7 +519,7 @@ def show_dashboard(market):
                 </div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True
     )
 
@@ -528,7 +541,7 @@ def show_dashboard(market):
 
     with col1:
         st.markdown(
-            f"""
+            _h(f"""
             <div class="bp-card">
                 <div class="bp-card-title"><span class="accent">🎯</span> AI PREDICTION</div>
                 <div class="bp-prediction-num">{prediction}</div>
@@ -537,25 +550,26 @@ def show_dashboard(market):
                 </div>
                 <div class="bp-button-red">📶 PREDICTION ACTIVE</div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True
         )
 
     with col2:
+        banner = "STRONG SIGNAL DETECTED" if confidence >= 70 else "SIGNAL BUILDING"
+
         st.markdown(
-            """
+            _h("""
             <div class="bp-card">
                 <div class="bp-card-title"><span class="accent">🧬</span> CONFIDENCE LEVEL</div>
-            """,
+            """),
             unsafe_allow_html=True
         )
         confidence_donut(confidence)
-        banner = "STRONG SIGNAL DETECTED" if confidence >= 70 else "SIGNAL BUILDING"
         st.markdown(
-            f"""
+            _h(f"""
                 <div class="bp-banner">✅ {banner}</div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True
         )
 
@@ -570,7 +584,7 @@ def show_dashboard(market):
 
     with col3:
         st.markdown(
-            f"""
+            _h(f"""
             <div class="bp-card">
                 <div class="bp-card-title"><span class="accent">🧬</span> AI LEARNING ENGINE</div>
                 <div class="bp-mini-grid">
@@ -593,7 +607,7 @@ def show_dashboard(market):
                 </div>
                 <div class="bp-banner">📈 THE ENGINE IS LEARNING AND IMPROVING...</div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True
         )
 
@@ -602,7 +616,7 @@ def show_dashboard(market):
         market_condition = "ACTIVE" if ticks > 0 else "IDLE"
 
         st.markdown(
-            f"""
+            _h(f"""
             <div class="bp-card">
                 <div class="bp-card-title"><span class="accent">📊</span> STATISTICS OVERVIEW</div>
                 <div class="bp-stat-row"><span>📈 Accuracy</span><span class="bp-stat-val">{stats['accuracy']}%</span></div>
@@ -611,7 +625,7 @@ def show_dashboard(market):
                 <div class="bp-stat-row"><span>🌪 Volatility Level</span><span class="bp-stat-val">{volatility}</span></div>
                 <div class="bp-stat-row"><span>☀️ Market Condition</span><span class="bp-stat-val">{market_condition}</span></div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True
         )
 
@@ -631,7 +645,7 @@ def show_dashboard(market):
 
             for i, (digit, count) in enumerate(top5, start=1):
                 pct = round((count / total) * 100)
-                rows_html += f"""
+                rows_html += _h(f"""
                 <div class="bp-rank-row">
                     <div class="bp-rank-num">{i}</div>
                     <div class="bp-rank-digit">{digit}</div>
@@ -640,18 +654,18 @@ def show_dashboard(market):
                     </div>
                     <div class="bp-rank-pct">{pct}%</div>
                 </div>
-                """
+                """) + "\n"
         else:
             rows_html = "<div style='color:#999;font-size:13px;'>No data yet</div>"
 
         st.markdown(
-            f"""
+            _h(f"""
             <div class="bp-card">
                 <div class="bp-card-title"><span class="accent">🔥</span> TOP RANKED DIGITS</div>
                 {rows_html}
                 <div class="bp-banner">⭐ BASED ON AI ANALYSIS</div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True
         )
 
@@ -665,13 +679,13 @@ def show_dashboard(market):
         chips_html += f'<div class="bp-digit-chip active">{latest_digit if latest_digit != "-" else "?"}</div>'
 
         st.markdown(
-            f"""
+            _h(f"""
             <div class="bp-card">
                 <div class="bp-card-title"><span class="accent">🕐</span> RECENT DIGITS</div>
                 <div class="bp-digit-grid">{chips_html}</div>
                 <div class="bp-banner" style="margin-top:16px;">🕐 LAST 30 DIGITS</div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True
         )
 
@@ -680,11 +694,11 @@ def show_dashboard(market):
     # =====================================================
 
     st.markdown(
-        """
+        _h("""
         <div class="bp-footer">
         🛡 Secure Connection &nbsp;|&nbsp; ● AI Engine Running
         </div>
-        """,
+        """),
         unsafe_allow_html=True
     )
 
