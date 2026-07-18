@@ -1,57 +1,15 @@
-import sqlite3
+from prediction_database import PredictionDatabase
 
 
 class LearningEngine:
 
     def __init__(self):
 
-        self.db = "ticks.db"
+        self.db = PredictionDatabase()
 
-        self.create_tables()
-
-
-    def create_tables(self):
-
-        conn = sqlite3.connect(self.db)
-
-        cursor = conn.cursor()
-
-        cursor.execute("""
-
-        CREATE TABLE IF NOT EXISTS predictions (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-            market TEXT,
-
-            predicted_digit INTEGER,
-
-            frequency_score REAL,
-
-            momentum_score REAL,
-
-            transition_score REAL,
-
-            confidence REAL,
-
-            signal TEXT,
-
-            duration INTEGER,
-
-            actual_digit INTEGER,
-
-            correct INTEGER
-
-        )
-
-        """)
-
-        conn.commit()
-
-        conn.close()
-
+    # ----------------------------------------
+    # Save New Prediction
+    # ----------------------------------------
 
     def save_prediction(
 
@@ -75,68 +33,29 @@ class LearningEngine:
 
     ):
 
-        conn = sqlite3.connect(self.db)
+        self.db.save_prediction(
 
-        cursor = conn.cursor()
+            market=market,
 
-        cursor.execute(
+            predicted_digit=predicted_digit,
 
-            """
+            frequency_score=frequency_score,
 
-            INSERT INTO predictions (
+            momentum_score=momentum_score,
 
-                market,
+            transition_score=transition_score,
 
-                predicted_digit,
+            confidence=confidence,
 
-                frequency_score,
+            signal=signal,
 
-                momentum_score,
-
-                transition_score,
-
-                confidence,
-
-                signal,
-
-                duration,
-
-                actual_digit,
-
-                correct
-
-            )
-
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)
-
-            """,
-
-            (
-
-                market,
-
-                predicted_digit,
-
-                frequency_score,
-
-                momentum_score,
-
-                transition_score,
-
-                confidence,
-
-                signal,
-
-                duration
-
-            )
+            duration=duration
 
         )
 
-        conn.commit()
-
-        conn.close()
-
+    # ----------------------------------------
+    # Validate Prediction
+    # ----------------------------------------
 
     def validate_prediction(
 
@@ -146,120 +65,59 @@ class LearningEngine:
 
     ):
 
-        conn = sqlite3.connect(self.db)
+        self.db.validate_prediction(
 
-        cursor = conn.cursor()
-
-        cursor.execute(
-
-            """
-
-            SELECT
-
-                id,
-
-                predicted_digit
-
-            FROM predictions
-
-            WHERE actual_digit IS NULL
-
-            ORDER BY id ASC
-
-            LIMIT 1
-
-            """
+            actual_digit
 
         )
 
-        row = cursor.fetchone()
+    # ----------------------------------------
+    # Prediction Statistics
+    # ----------------------------------------
 
-        if row is None:
+    def get_total_predictions(self):
 
-            conn.close()
+        predictions = self.db.load_predictions()
 
-            return
+        return len(predictions)
 
+    def get_correct_predictions(self):
 
-        prediction_id = row[0]
+        predictions = self.db.load_predictions()
 
-        predicted_digit = row[1]
+        wins = 0
 
-        correct = int(
+        for row in predictions:
 
-            predicted_digit == actual_digit
+            if row[11] == 1:
 
-        )
+                wins += 1
 
+        return wins
 
-        cursor.execute(
+    def get_wrong_predictions(self):
 
-            """
+        predictions = self.db.load_predictions()
 
-            UPDATE predictions
+        losses = 0
 
-            SET
+        for row in predictions:
 
-                actual_digit=?,
+            if row[11] == 0:
 
-                correct=?
+                losses += 1
 
-            WHERE id=?
-
-            """,
-
-            (
-
-                actual_digit,
-
-                correct,
-
-                prediction_id
-
-            )
-
-        )
-
-        conn.commit()
-
-        conn.close()
-
+        return losses
 
     def get_accuracy(self):
 
-        conn = sqlite3.connect(self.db)
-
-        cursor = conn.cursor()
-
-        cursor.execute(
-
-            """
-
-            SELECT
-
-                COUNT(*),
-
-                SUM(correct)
-
-            FROM predictions
-
-            WHERE correct IS NOT NULL
-
-            """
-
-        )
-
-        total, wins = cursor.fetchone()
-
-        conn.close()
+        total = self.get_total_predictions()
 
         if total == 0:
 
             return 0
 
-        if wins is None:
-
-            wins = 0
+        wins = self.get_correct_predictions()
 
         return round(
 
@@ -269,75 +127,24 @@ class LearningEngine:
 
         )
 
+    # ----------------------------------------
+    # Future AI Training
+    # ----------------------------------------
 
-    def get_total_predictions(self):
+    def train(self):
 
-        conn = sqlite3.connect(self.db)
+        """
+        Placeholder.
 
-        cursor = conn.cursor()
+        Future versions of NUTEC will use this
+        method to learn from historical data.
 
-        cursor.execute(
+        Planned features:
 
-            "SELECT COUNT(*) FROM predictions"
+        - Pattern learning
+        - Market clustering
+        - Confidence calibration
+        - Adaptive weighting
+        """
 
-        )
-
-        total = cursor.fetchone()[0]
-
-        conn.close()
-
-        return total
-
-
-    def get_correct_predictions(self):
-
-        conn = sqlite3.connect(self.db)
-
-        cursor = conn.cursor()
-
-        cursor.execute(
-
-            """
-
-            SELECT COUNT(*)
-
-            FROM predictions
-
-            WHERE correct=1
-
-            """
-
-        )
-
-        wins = cursor.fetchone()[0]
-
-        conn.close()
-
-        return wins
-
-
-    def get_wrong_predictions(self):
-
-        conn = sqlite3.connect(self.db)
-
-        cursor = conn.cursor()
-
-        cursor.execute(
-
-            """
-
-            SELECT COUNT(*)
-
-            FROM predictions
-
-            WHERE correct=0
-
-            """
-
-        )
-
-        losses = cursor.fetchone()[0]
-
-        conn.close()
-
-        return losses
+        pass
