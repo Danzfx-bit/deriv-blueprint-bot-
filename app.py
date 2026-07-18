@@ -2,7 +2,7 @@ from deriv_client import DerivClient
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
-from dashboard import show_dashboard
+from dashboard import show_dashboard, _inject_css
 from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
 from database import save_tick, get_tick_count
@@ -21,6 +21,8 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
+
+_inject_css()
 
 
 st_autorefresh(
