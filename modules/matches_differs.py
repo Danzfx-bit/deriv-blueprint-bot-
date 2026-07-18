@@ -9,7 +9,7 @@ MIN_TICKS = 50
 
 def show():
 
-    st.header("📡 NUTEC Blueprint Scanner")
+    st.header("📡 Blueprint Prediction Scanner")
 
 
     market = st.session_state.get(
@@ -48,7 +48,7 @@ def show():
 
 
     st.write(
-        "Press SCAN when you want a new signal."
+        "Press SCAN when you want a new prediction."
     )
 
 
@@ -57,15 +57,13 @@ def show():
         use_container_width=True
     ):
 
-
         result = analyze_digits(
             history,
             market=market,
-            duration=5
+            duration=1
         )
 
         st.session_state["scan_result"] = result
-
 
 
     if "scan_result" not in st.session_state:
@@ -75,7 +73,6 @@ def show():
         )
 
         return
-
 
 
     result = st.session_state["scan_result"]
@@ -90,31 +87,21 @@ def show():
     with col1:
 
         st.metric(
-            "Signal",
-            result["signal"]
-        )
-
-        st.metric(
-            "Target Digit",
-            result["number"]
+            "Prediction",
+            result["target_digit"]
         )
 
         st.metric(
             "Duration",
-            f"{result['duration']} ticks"
+            f"{result['duration']} Tick"
         )
 
 
     with col2:
 
         st.metric(
-            "Blueprint Score",
-            f"{result['blueprint_score']}%"
-        )
-
-        st.metric(
             "Confidence",
-            result["confidence"]
+            f"{result['confidence']}%"
         )
 
         st.metric(
@@ -131,15 +118,10 @@ def show():
     )
 
 
-    for index, item in enumerate(
-        result["ranking"],
-        start=1
-    ):
-
-        digit, score = item
+    for digit, score in result["ranking"]:
 
         st.write(
-            f"{index}. Digit {digit} → {score}%"
+            f"Digit {digit} → {score}%"
         )
 
 
