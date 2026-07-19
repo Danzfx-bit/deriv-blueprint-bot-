@@ -7,6 +7,7 @@ from database import (
 )
 
 from learning_engine import LearningEngine
+from signals import get_live_status
 
 
 learning = LearningEngine()
@@ -517,6 +518,81 @@ div[data-testid="stProgress"] > div > div > div{
 background-color:#D32F2F !important;
 }
 
+/* ---------- Digit track (0-9 strip with cursor + trigger/target marks) ---------- */
+
+.bp-track-row{
+display:flex;
+justify-content:space-between;
+align-items:flex-end;
+gap:6px;
+margin:10px 0 4px 0;
+}
+
+.bp-track-col{
+flex:1;
+display:flex;
+flex-direction:column;
+align-items:center;
+padding:8px 4px 12px 4px;
+border-radius:12px;
+background:#F6F6F8;
+}
+
+.bp-track-col.trigger{
+background:#E8F8EE;
+border:2px solid #2ecc71;
+}
+
+.bp-track-col.target{
+background:#FDE8E8;
+border:2px solid #D32F2F;
+}
+
+.bp-track-cursor{
+color:#1a1a1a;
+font-size:14px;
+line-height:1;
+margin-bottom:4px;
+}
+
+.bp-track-cursor-spacer{
+height:14px;
+margin-bottom:4px;
+}
+
+.bp-track-bar-bg{
+width:100%;
+height:60px;
+display:flex;
+align-items:flex-end;
+justify-content:center;
+}
+
+.bp-track-bar-fill{
+width:60%;
+background:#D32F2F;
+border-radius:4px 4px 0 0;
+min-height:2px;
+}
+
+.bp-track-col.trigger .bp-track-bar-fill{
+background:#2ecc71;
+}
+
+.bp-track-pct{
+font-size:10px;
+font-weight:700;
+color:#666;
+margin-top:6px;
+}
+
+.bp-track-digit-label{
+font-size:15px;
+font-weight:900;
+color:#1a1a1a;
+margin-top:2px;
+}
+
 </style>
 """), unsafe_allow_html=True)
 
@@ -564,6 +640,72 @@ def confidence_donut(confidence):
     )
 
 
+def digit_track_widget(strategy_result):
+    """
+    Deriv-style 0-9 digit strip for the Digit Matches strategy.
+
+    - Bar height per digit = its frequency % over the last 200 ticks.
+    - A cursor arrow marks the current live digit.
+    - Green highlight = the "trigger" digit (must be >=12%, wait for
+      the live digit to touch this column before entering).
+    - Red highlight = the "target" digit (the one you actually place
+      the Match trade on, once the trigger fires).
+    """
+
+    pct = strategy_result.get("full_percentages", {}) or {}
+    top_digit = strategy_result.get("top_digit", "-")
+    second_digit = strategy_result.get("second_digit", "-")
+    live_digit = strategy_result.get("live_digit", "-")
+
+    max_pct = max(pct.values()) if pct else 1
+    max_pct = max(max_pct, 1)
+
+    cols_html = ""
+
+    for d in range(10):
+
+        p = pct.get(d, 0)
+        bar_height = round((p / max_pct) * 60) if max_pct else 0
+
+        classes = "bp-track-col"
+        if d == top_digit:
+            classes += " trigger"
+        if d == second_digit:
+            classes += " target"
+
+        if d == live_digit:
+            cursor = '<div class="bp-track-cursor">▲</div>'
+        else:
+            cursor = '<div class="bp-track-cursor-spacer"></div>'
+
+        cols_html += _h(f"""
+        <div class="{classes}">
+            {cursor}
+            <div class="bp-track-bar-bg">
+                <div class="bp-track-bar-fill" style="height:{bar_height}px;"></div>
+            </div>
+            <div class="bp-track-pct">{p}%</div>
+            <div class="bp-track-digit-label">{d}</div>
+        </div>
+        """) + "\n"
+
+    st.markdown(
+        _h(f"""
+        <div class="bp-card">
+            <div class="bp-card-title"><span class="accent">🎯</span> DIGIT TREND (LAST 200 TICKS)</div>
+            <div class="bp-track-row">
+                {cols_html}
+            </div>
+            <div style="display:flex; gap:16px; margin-top:14px; font-size:12px; color:#666; font-weight:700; flex-wrap:wrap;">
+                <span>🟢 Trigger digit (wait for cursor)</span>
+                <span>🔴 Target digit (match this)</span>
+            </div>
+        </div>
+        """),
+        unsafe_allow_html=True
+    )
+
+
 # =====================================================
 # Dashboard
 # =====================================================
@@ -576,7 +718,7 @@ def show_dashboard(market):
 
     history = load_ticks(
         market,
-        limit=100
+        limit=200
     )
 
     latest_digit = "-"
@@ -638,20 +780,28 @@ def show_dashboard(market):
     # =====================================================
     # AI PREDICTION + CONFIDENCE
     # =====================================================
+    #
+    # Fully automatic - recomputed every rerun/tick, no SCAN press
+    # needed to see the current state. Pressing SCAN on the Matches
+    # & Differs page only logs whatever this same status already
+    # shows at that moment.
 
-    prediction = "-"
-    confidence = 0
-    duration = "1 Tick"
+    status = get_live_status(market)
 
-    if "scan_result" in st.session_state:
-        result = st.session_state["scan_result"]
-        prediction = result.get("target_digit", "-")
-        confidence = result.get("confidence", 0)
-        duration = f"{result.get('duration', 1)} Tick"
+    prediction = status["target_digit"]
+    raw_confidence = status["confidence"]
+    duration = f"{status['duration']} Tick"
+    entry_active = status["entry_active"]
+    reason = status["reason"]
+
+    calibration = learning.get_calibrated_confidence(raw_confidence)
+    confidence = calibration["value"]
 
     col1, col2 = st.columns(2)
 
     with col1:
+        status_label = "🟢 ENTRY ACTIVE" if entry_active else f"⏳ {reason}"
+
         st.markdown(
             _h(f"""
             <div class="bp-card">
@@ -660,14 +810,18 @@ def show_dashboard(market):
                 <div style="text-align:center;">
                     <span class="bp-tag">⏱ DURATION: {duration}</span>
                 </div>
-                <div class="bp-button-red">📶 PREDICTION ACTIVE</div>
+                <div class="bp-button-red">{status_label}</div>
             </div>
             """),
             unsafe_allow_html=True
         )
 
     with col2:
-        banner = "STRONG SIGNAL DETECTED" if confidence >= 70 else "SIGNAL BUILDING"
+        if calibration["calibrated"]:
+            banner = f"REAL WIN RATE · {calibration['sample_size']} PAST SIGNALS"
+        else:
+            low, high = calibration["bucket"]
+            banner = f"UNCALIBRATED · {calibration['sample_size']}/{calibration['min_samples']} SIGNALS IN {low}-{high}% RANGE"
 
         st.markdown(
             _h("""
@@ -679,11 +833,18 @@ def show_dashboard(market):
         confidence_donut(confidence)
         st.markdown(
             _h(f"""
-                <div class="bp-banner">✅ {banner}</div>
+                <div class="bp-banner">{'✅' if calibration['calibrated'] else '⏳'} {banner}</div>
             </div>
             """),
             unsafe_allow_html=True
         )
+
+    # =====================================================
+    # DIGIT TREND STRIP
+    # =====================================================
+
+    if status.get("full_percentages"):
+        digit_track_widget(status)
 
     # =====================================================
     # LEARNING ENGINE + STATISTICS
