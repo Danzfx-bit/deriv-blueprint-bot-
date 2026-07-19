@@ -129,21 +129,28 @@ if st.session_state.get("tick_thread_market") != market:
 
 # ---------------- Live page content (fast, no full-page dim) ---------------- #
 #
-# This fragment reruns on its own fast timer, independent of the
-# rest of the script - only this region of the page updates, so
-# there's no full-page "running" overlay/dim on every tick.
+# Two separate fragments, each rerunning on its own fast timer. A
+# fragment can only write elements into the container it's CALLED
+# from - writing to st.sidebar.xxx from a fragment invoked at the
+# main page level isn't allowed, so the sidebar status fragment is
+# invoked from inside a `with st.sidebar:` block instead, using bare
+# st.xxx() calls (which then correctly land in the sidebar).
 
 @st.fragment(run_every=1)
-def _live_content():
+def _live_sidebar_status():
 
     tick_info = st.session_state["tick_buffer"].get()
 
     if tick_info["connected"]:
-        st.sidebar.success(f"🟢 Live · digit {tick_info['digit']}")
+        st.success(f"🟢 Live · digit {tick_info['digit']}")
     elif tick_info["error"]:
-        st.sidebar.error(f"🔴 {tick_info['error']}")
+        st.error(f"🔴 {tick_info['error']}")
     else:
-        st.sidebar.info("🟡 Connecting to Deriv...")
+        st.info("🟡 Connecting to Deriv...")
+
+
+@st.fragment(run_every=1)
+def _live_page_content():
 
     if page == "Dashboard":
 
@@ -154,4 +161,7 @@ def _live_content():
         show_matches()
 
 
-_live_content()
+with st.sidebar:
+    _live_sidebar_status()
+
+_live_page_content()
