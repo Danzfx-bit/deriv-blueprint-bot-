@@ -498,18 +498,29 @@ border-color:rgba(255,255,255,.15) !important;
 /* ---------- Native buttons ---------- */
 
 .stButton > button{
-background:#D32F2F !important;
+background:linear-gradient(135deg, #E53935, #B71C1C) !important;
 color:white !important;
 border:none !important;
-border-radius:12px !important;
+border-radius:30px !important;
 font-weight:800 !important;
-padding:12px 20px !important;
-box-shadow:0 6px 15px rgba(0,0,0,.15) !important;
+font-size:14px !important;
+letter-spacing:0.5px !important;
+text-transform:uppercase !important;
+padding:14px 28px !important;
+box-shadow:0 8px 20px rgba(211,47,47,.35) !important;
+transition:transform 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 .stButton > button:hover{
-background:#B71C1C !important;
+background:linear-gradient(135deg, #EF5350, #C62828) !important;
 color:white !important;
+transform:translateY(-2px) !important;
+box-shadow:0 12px 24px rgba(211,47,47,.45) !important;
+}
+
+.stButton > button:active{
+transform:translateY(0) !important;
+box-shadow:0 4px 10px rgba(211,47,47,.35) !important;
 }
 
 /* ---------- Progress bar ---------- */
