@@ -137,3 +137,59 @@ def get_tick_count(market=None):
     conn.close()
 
     return count
+
+
+def load_ticks_between(market, start_iso, end_iso=None):
+    """
+    Return digits for a market whose timestamp falls in
+    [start_iso, end_iso) - or [start_iso, now) if end_iso is None.
+
+    Used for the Digit Matches hourly-window strategy: pass the ISO
+    start of the current/previous clock hour as start_iso, and the
+    start of the NEXT hour as end_iso to bound a single completed
+    hour. Ordered oldest -> newest.
+
+    Timestamps are stored via datetime.utcnow().isoformat(), so
+    start_iso/end_iso should also be UTC ISO strings for correct
+    string-lexicographic comparison.
+    """
+
+    create_database()
+
+    conn = sqlite3.connect(DB_FILE)
+
+    cursor = conn.cursor()
+
+    if end_iso:
+
+        cursor.execute("""
+            SELECT digit
+            FROM ticks
+            WHERE market = ?
+            AND timestamp >= ?
+            AND timestamp < ?
+            ORDER BY id ASC
+        """, (
+            market,
+            start_iso,
+            end_iso
+        ))
+
+    else:
+
+        cursor.execute("""
+            SELECT digit
+            FROM ticks
+            WHERE market = ?
+            AND timestamp >= ?
+            ORDER BY id ASC
+        """, (
+            market,
+            start_iso
+        ))
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return [row[0] for row in rows]
