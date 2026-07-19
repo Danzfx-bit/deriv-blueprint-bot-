@@ -123,3 +123,56 @@ class LearningEngine:
             2
 
         )
+
+
+    # ---------------------------------------
+    # Calibrated Confidence
+    # ---------------------------------------
+    #
+    # The "confidence" a signal reports at prediction time (from
+    # BlueprintEngine) is a raw heatmap/frequency score - NOT a
+    # measured win probability. This looks back at every past
+    # prediction made with a similar raw confidence and returns the
+    # REAL win rate those predictions achieved.
+    #
+    # Until there are enough completed predictions in that bucket
+    # (min_samples), the number isn't trustworthy yet, so this falls
+    # back to the raw confidence and flags it as uncalibrated rather
+    # than pretending to have a real answer too early.
+
+    def get_calibrated_confidence(
+
+        self,
+
+        raw_confidence,
+
+        min_samples=30
+
+    ):
+
+        stats = self.db.get_winrate_by_confidence_bucket(
+
+            raw_confidence
+
+        )
+
+        calibrated = stats["sample_size"] >= min_samples
+
+        if calibrated:
+
+            value = stats["winrate"]
+
+        else:
+
+            value = raw_confidence
+
+        return {
+
+            "value": value,
+            "calibrated": calibrated,
+            "sample_size": stats["sample_size"],
+            "bucket": stats["bucket"],
+            "raw_confidence": raw_confidence,
+            "min_samples": min_samples
+
+        }
