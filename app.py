@@ -5,6 +5,7 @@ import streamlit as st
 
 from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches
+from modules.over_under import show as show_over_under
 from config import APP_NAME, MARKETS, TIMEFRAMES
 from database import save_tick, get_tick_count
 from learning_engine import LearningEngine
@@ -53,7 +54,8 @@ page = st.sidebar.radio(
     "Navigation",
     [
         "Dashboard",
-        "Matches & Differs"
+        "Matches & Differs",
+        "Over/Under"
     ]
 )
 
@@ -187,6 +189,10 @@ def _live_page_content():
     elif page == "Matches & Differs":
 
         show_matches()
+
+    elif page == "Over/Under":
+
+        show_over_under()
 
 
 with st.sidebar:
