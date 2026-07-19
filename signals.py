@@ -1,12 +1,42 @@
 from database import load_ticks
 from matches_strategy import MatchesStrategy
+from over_under_strategy import OverUnderStrategy
 from learning_engine import LearningEngine
 from tracker import save_signal
 
 
 strategy = MatchesStrategy()
 
+over_under_strategy = OverUnderStrategy()
+
 learning = LearningEngine()
+
+
+def get_over_under_status(market):
+    """
+    Runs automatically on every rerun/tick - no button needed.
+
+    Loads enough ticks to build the full snapshot series (up to
+    WINDOW + STEP * (NUM_SNAPSHOTS - 1) ticks) and returns the
+    current Over/Under 5 signal, confidence, trend, and acceleration.
+
+    This is a pure READ, same as get_live_status - it never logs
+    anything on its own.
+    """
+
+    needed = (
+        over_under_strategy.WINDOW
+        + over_under_strategy.STEP * (over_under_strategy.NUM_SNAPSHOTS - 1)
+    )
+
+    history = load_ticks(market, limit=needed)
+
+    result = over_under_strategy.analyze(history)
+
+    result["ticks_available"] = len(history)
+    result["ticks_needed"] = needed
+
+    return result
 
 
 def get_live_status(market):
