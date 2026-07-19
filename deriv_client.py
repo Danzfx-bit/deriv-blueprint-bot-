@@ -101,3 +101,66 @@ class DerivClient:
 
                 if not stop_event.is_set():
                     time.sleep(2)
+
+    def buy_digit_match(self, api_token, symbol, digit, stake, currency="USD", duration=1, duration_unit="t"):
+        """
+        Places a single Digit Matches contract for `digit` on `symbol`,
+        using a fresh authorized connection (kept separate from any
+        tick subscription so it doesn't interfere with that stream).
+
+        Never raises - always returns a result dict, either:
+          {"success": True, "contract_id": ..., "buy_price": ..., "payout": ..., "longcode": ...}
+        or
+          {"success": False, "error": "..."}
+        """
+
+        try:
+            ws = websocket.create_connection(self.url, timeout=20)
+
+            ws.send(json.dumps({"authorize": api_token}))
+            auth_response = json.loads(ws.recv())
+
+            if "error" in auth_response:
+                ws.close()
+                return {
+                    "success": False,
+                    "error": auth_response["error"].get("message", "Authorization failed")
+                }
+
+            ws.send(json.dumps({
+                "buy": 1,
+                "price": stake,
+                "parameters": {
+                    "amount": stake,
+                    "basis": "stake",
+                    "contract_type": "DIGITMATCH",
+                    "currency": currency,
+                    "duration": duration,
+                    "duration_unit": duration_unit,
+                    "symbol": symbol,
+                    "barrier": str(digit),
+                }
+            }))
+
+            buy_response = json.loads(ws.recv())
+            ws.close()
+
+            if "error" in buy_response:
+                return {
+                    "success": False,
+                    "error": buy_response["error"].get("message", "Buy request failed")
+                }
+
+            contract = buy_response.get("buy", {})
+
+            return {
+                "success": True,
+                "contract_id": contract.get("contract_id"),
+                "buy_price": contract.get("buy_price"),
+                "payout": contract.get("payout"),
+                "longcode": contract.get("longcode"),
+            }
+
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
