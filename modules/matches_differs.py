@@ -1,12 +1,9 @@
 import streamlit as st
 
-from signals import analyze_digits
-from database import load_ticks
-from prediction_database import PredictionDatabase
-from dashboard import _h, confidence_donut
-
-
-MIN_TICKS = 50
+from database import load_ticks, get_tick_count
+from signals import get_live_status, log_current_signal
+from learning_engine import LearningEngine
+from dashboard import _h, confidence_donut, digit_track_widget
 
 
 def show():
@@ -14,7 +11,7 @@ def show():
     st.markdown(
         _h("""
         <div class="bp-card">
-            <div class="bp-title" style="font-size:26px;">📡 BLUEPRINT PREDICTION SCANNER</div>
+            <div class="bp-title" style="font-size:26px;">📡 DIGIT MATCHES SCANNER</div>
         </div>
         """),
         unsafe_allow_html=True
@@ -24,32 +21,33 @@ def show():
         "market"
     )
 
-    history = load_ticks(
-        market,
-        limit=1000
-    )
+    # =====================================================
+    # Live status - fully automatic, recomputed every rerun.
+    # SCAN only logs whatever this already shows at the moment
+    # it's pressed.
+    # =====================================================
 
-    if len(history) < MIN_TICKS:
+    status = get_live_status(market)
+
+    ticks = get_tick_count(market)
+
+    if not status["valid"] and status["reason"].startswith("Waiting for a full previous hour"):
 
         st.markdown(
             _h(f"""
             <div class="bp-card">
-                <div class="bp-banner">📡 COLLECTING DATA... ({len(history)}/{MIN_TICKS} TICKS)</div>
+                <div class="bp-banner">⏳ COLLECTING HOURLY DATA... ({ticks} TICKS STORED SO FAR)</div>
             </div>
             """),
             unsafe_allow_html=True
         )
 
-        st.progress(
-            len(history) / MIN_TICKS
-        )
-
         return
 
     st.markdown(
-        _h(f"""
+        _h("""
         <div class="bp-card">
-            <div class="bp-banner">🟢 SCANNER READY</div>
+            <div class="bp-banner">🟢 SCANNER LIVE - UPDATING AUTOMATICALLY</div>
         </div>
         """),
         unsafe_allow_html=True
@@ -61,8 +59,8 @@ def show():
         st.markdown(
             _h(f"""
             <div class="bp-card">
-                <div class="bp-label">Available Ticks</div>
-                <div class="bp-value">{len(history)}</div>
+                <div class="bp-label">Stored Ticks</div>
+                <div class="bp-value">{ticks}</div>
             </div>
             """),
             unsafe_allow_html=True
@@ -72,9 +70,11 @@ def show():
         st.markdown(
             _h("""
             <div class="bp-card">
-                <div class="bp-label" style="margin-bottom:8px;">Ready For Next Scan</div>
+                <div class="bp-label" style="margin-bottom:8px;">Scan Button</div>
                 <div style="color:#666; font-size:14px; font-weight:600;">
-                    Press SCAN when you want a new prediction.
+                    The status below updates automatically. Press SCAN
+                    only when you want THIS moment logged for accuracy
+                    tracking.
                 </div>
             </div>
             """),
@@ -86,48 +86,41 @@ def show():
         use_container_width=True
     ):
 
-        result = analyze_digits(
-            history,
-            market=market,
+        logged = log_current_signal(
+            market,
+            status,
             duration=1
         )
 
-        st.session_state["scan_result"] = result
-
-    if "scan_result" not in st.session_state:
-
-        st.markdown(
-            _h("""
-            <div class="bp-card">
-                <div class="bp-banner">🎯 PRESS SCAN TO ANALYSE THE LATEST MARKET DATA</div>
-            </div>
-            """),
-            unsafe_allow_html=True
-        )
-
-        return
-
-    result = st.session_state["scan_result"]
-
-    db = PredictionDatabase()
-
-    stats = db.get_learning_statistics()
+        if logged:
+            st.success("✅ Signal logged for tracking.")
+        else:
+            st.info("⏳ Nothing to log - conditions aren't fully met right now.")
 
     # =====================================================
     # PREDICTION + CONFIDENCE
     # =====================================================
 
+    learning = LearningEngine()
+
+    stats = learning.db.get_learning_statistics()
+
+    calibration = learning.get_calibrated_confidence(status["confidence"])
+
     col1, col2 = st.columns(2)
 
     with col1:
+        status_label = "🟢 ENTRY ACTIVE" if status["entry_active"] else f"⏳ {status['reason']}"
+
         st.markdown(
             _h(f"""
             <div class="bp-card">
                 <div class="bp-card-title"><span class="accent">🎯</span> PREDICTION</div>
-                <div class="bp-prediction-num">{result['target_digit']}</div>
+                <div class="bp-prediction-num">{status['target_digit']}</div>
                 <div style="text-align:center;">
-                    <span class="bp-tag">⏱ DURATION: {result['duration']} Tick</span>
+                    <span class="bp-tag">⏱ DURATION: {status['duration']} Tick</span>
                 </div>
+                <div class="bp-banner" style="margin-top:14px;">{status_label}</div>
             </div>
             """),
             unsafe_allow_html=True
@@ -141,14 +134,30 @@ def show():
             """),
             unsafe_allow_html=True
         )
-        confidence_donut(result["confidence"])
+        confidence_donut(calibration["value"])
+
+        if calibration["calibrated"]:
+            note = f"REAL WIN RATE · {calibration['sample_size']} PAST SIGNALS"
+            icon = "✅"
+        else:
+            low, high = calibration["bucket"]
+            note = f"UNCALIBRATED · {calibration['sample_size']}/{calibration['min_samples']} SIGNALS IN {low}-{high}% RANGE"
+            icon = "⏳"
+
         st.markdown(
             _h(f"""
-                <div class="bp-banner">📊 {len(history)} TICKS ANALYSED</div>
+                <div class="bp-banner">{icon} {note}</div>
             </div>
             """),
             unsafe_allow_html=True
         )
+
+    # =====================================================
+    # DIGIT TREND STRIP
+    # =====================================================
+
+    if status.get("full_percentages"):
+        digit_track_widget(status)
 
     # =====================================================
     # LEARNING ENGINE
@@ -200,7 +209,7 @@ def show():
     with col3:
         rows_html = ""
 
-        for i, (digit, score) in enumerate(result["ranking"], start=1):
+        for i, (digit, score) in enumerate(status["ranking"], start=1):
             rows_html += _h(f"""
             <div class="bp-rank-row">
                 <div class="bp-rank-num">{i}</div>
@@ -218,16 +227,16 @@ def show():
         st.markdown(
             _h(f"""
             <div class="bp-card">
-                <div class="bp-card-title"><span class="accent">🏆</span> TOP RANKED DIGITS</div>
+                <div class="bp-card-title"><span class="accent">🏆</span> TOP RANKED DIGITS (THIS HOUR)</div>
                 {rows_html}
-                <div class="bp-banner">⭐ BASED ON AI ANALYSIS</div>
+                <div class="bp-banner">⭐ CURRENT HOUR VS PREVIOUS HOUR</div>
             </div>
             """),
             unsafe_allow_html=True
         )
 
     with col4:
-        recent = history[-30:]
+        recent = load_ticks(market, limit=30)
         chips_html = ""
 
         for d in recent:
