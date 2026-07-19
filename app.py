@@ -8,7 +8,8 @@ from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
 from database import save_tick, get_tick_count
 from learning_engine import LearningEngine
-from live_tick_buffer import LiveTickBuffer
+from live_tick_buffer import LiveTickBuffer, AutoTradeToggle
+import auto_trader
 
 
 learning = LearningEngine()
@@ -66,6 +67,24 @@ st.sidebar.info(
 )
 
 
+if "auto_trade_toggle" not in st.session_state:
+    st.session_state["auto_trade_toggle"] = AutoTradeToggle()
+
+auto_trade_enabled = st.sidebar.checkbox(
+    "🤖 Enable Auto-Trading (places real demo trades)",
+    value=False,
+    help=f"When on, places a ${auto_trader.STAKE:.2f} {auto_trader.CURRENCY} "
+         f"trade the instant a match fires, up to {auto_trader.MAX_TRADES_PER_DAY}/day."
+)
+
+st.session_state["auto_trade_toggle"].set(auto_trade_enabled)
+
+if auto_trade_enabled:
+    st.sidebar.warning("🤖 Auto-trading is LIVE on this account.")
+else:
+    st.sidebar.caption("Auto-trading is off.")
+
+
 st.divider()
 
 
@@ -91,7 +110,7 @@ if st.session_state.get("tick_thread_market") != market:
     st.session_state["tick_buffer"] = new_buffer
     st.session_state["tick_thread_market"] = market
 
-    def _make_on_tick(target_market, buffer):
+    def _make_on_tick(target_market, buffer, toggle):
 
         def _on_tick(quote, digit):
 
@@ -101,6 +120,11 @@ if st.session_state.get("tick_thread_market") != market:
             # they're safe to call from this background thread.
             save_tick(target_market, quote, digit)
             learning.validate_prediction(digit)
+
+            if toggle.get():
+                auto_trader.check_and_trade(
+                    target_market, APP_ID, API_TOKEN
+                )
 
         return _on_tick
 
@@ -117,7 +141,11 @@ if st.session_state.get("tick_thread_market") != market:
         target=client.stream_ticks,
         args=(
             market,
-            _make_on_tick(market, new_buffer),
+            _make_on_tick(
+                market,
+                new_buffer,
+                st.session_state["auto_trade_toggle"]
+            ),
             new_stop_event,
             _make_on_error(new_buffer),
         ),
