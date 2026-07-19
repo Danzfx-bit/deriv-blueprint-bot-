@@ -8,6 +8,8 @@ from database import (
 
 from learning_engine import LearningEngine
 from signals import get_live_status
+import trade_log
+import auto_trader
 
 
 learning = LearningEngine()
@@ -975,13 +977,51 @@ def show_dashboard(market):
         )
 
     # =====================================================
+    # RECENT AUTO-TRADES
+    # =====================================================
+
+    trades = trade_log.get_recent_trades(limit=10)
+    todays_count = trade_log.get_todays_trade_count()
+
+    if trades:
+
+        rows_html = ""
+
+        for (ts, tmarket, digit, stake, success, contract_id,
+             buy_price, payout, error) in trades:
+
+            if success:
+                status_html = f'<span style="color:#2ecc71;font-weight:800;">✓ #{contract_id}</span>'
+                detail = f"${stake:.2f} on digit {digit} · payout ${payout or 0:.2f}"
+            else:
+                status_html = '<span style="color:#D32F2F;font-weight:800;">✕ FAILED</span>'
+                detail = f"${stake:.2f} on digit {digit} · {error or 'unknown error'}"
+
+            rows_html += _h(f"""
+            <div class="bp-stat-row">
+                <span>{ts[11:19]} UTC · {detail}</span>
+                <span class="bp-stat-val">{status_html}</span>
+            </div>
+            """) + "\n"
+
+        st.markdown(
+            _h(f"""
+            <div class="bp-card">
+                <div class="bp-card-title"><span class="accent">🤖</span> RECENT AUTO-TRADES</div>
+                {rows_html}
+                <div class="bp-banner" style="margin-top:14px;">📅 {todays_count}/{auto_trader.MAX_TRADES_PER_DAY} TRADES TODAY</div>
+            </div>
+            """),
+            unsafe_allow_html=True
+        )
+
+    # =====================================================
     # FOOTER
     # =====================================================
 
     st.markdown(
         _h("""
-        <div class="bp-footer">
-        🛡 Secure Connection &nbsp;|&nbsp; ● AI Engine Running
+        <div class="bp-footer">        🛡 Secure Connection &nbsp;|&nbsp; ● AI Engine Running
         </div>
         """),
         unsafe_allow_html=True
