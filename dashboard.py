@@ -781,18 +781,19 @@ def show_dashboard(market):
     # AI PREDICTION + CONFIDENCE
     # =====================================================
     #
-    # Fully automatic - recomputed every rerun/tick, no SCAN press
-    # needed to see the current state. Pressing SCAN on the Matches
-    # & Differs page only logs whatever this same status already
-    # shows at that moment.
+    # Fully automatic - recomputed fresh every rerun/tick, so a new
+    # tick landing is reflected immediately without needing SCAN
+    # pressed. SCAN (on the Matches & Differs page) only logs
+    # whatever this same live status shows at the moment it's
+    # pressed - it doesn't change what's displayed here.
 
     status = get_live_status(market)
 
-    prediction = status["target_digit"]
-    raw_confidence = status["confidence"]
-    duration = f"{status['duration']} Tick"
-    entry_active = status["entry_active"]
-    reason = status["reason"]
+    prediction = status.get("target_digit", "-")
+    raw_confidence = status.get("confidence", 0)
+    duration = f"{status.get('duration', 1)} Tick"
+    entry_active = status.get("entry_active", False)
+    reason = status.get("reason", "")
 
     calibration = learning.get_calibrated_confidence(raw_confidence)
     confidence = calibration["value"]
