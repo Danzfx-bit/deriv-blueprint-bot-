@@ -1,100 +1,100 @@
-from blueprint_engine import BlueprintEngine
+import streamlit as st
+
+from matches_strategy import MatchesStrategy
 from learning_engine import LearningEngine
 from tracker import save_signal
 
 
-blueprint = BlueprintEngine()
+strategy = MatchesStrategy()
 
 learning = LearningEngine()
 
 
-def analyze_digits(
+def get_live_status(market):
+    """
+    Runs automatically on every rerun/tick - no button needed.
 
-    history,
+    Computes the current-hour vs previous-hour digit percentages,
+    keeps the locked anchor/target in st.session_state (it only
+    changes when a different digit takes over the #1 spot), and
+    returns the current display status: target digit, confidence,
+    validity, entry state, and the reason if not active yet.
 
-    market="Unknown",
+    Confidence is binary by design: 98% when every condition (12%+
+    threshold, top-3 gaining, live digit touching the anchor) is
+    met right now, 0 otherwise - which the dashboard's existing
+    "LOW CONFIDENCE" label already reflects with no extra UI logic.
+    """
 
-    duration=1
+    snapshot = strategy.get_snapshot(market)
 
-):
+    anchor_key = f"matches_anchor::{market}"
 
-    result = blueprint.analyze(history)
+    anchor_state = st.session_state.get(anchor_key)
 
+    new_anchor, status = strategy.update_anchor(snapshot, anchor_state)
 
-    target = result["target_digit"]
+    st.session_state[anchor_key] = new_anchor
 
+    confidence = 98 if status["entry_active"] else 0
 
-    # ---------------------------------------
-    # Save every valid prediction
-    # ---------------------------------------
+    return {
 
-    if target != "-":
+        "target_digit": status["target_digit"],
+        "confidence": confidence,
+        "duration": 1,
+        "valid": status["valid"],
+        "entry_active": status["entry_active"],
+        "reason": status["reason"],
+        "top_digit": status["top_digit"],
+        "second_digit": status["second_digit"],
+        "ranking": snapshot.get("ranking", []),
+        "full_percentages": snapshot.get("current_pct", {}),
+        "live_digit": snapshot.get("live_digit", "-"),
+        "snapshot": snapshot,
 
-        blueprint_data = (
-
-            result
-
-            .get("details", {})
-
-            .get("blueprint", {})
-
-            .get(target, {})
-
-        )
-
-
-        save_signal(
-
-            market=market,
-
-            signal="PREDICTION",
-
-            digit=target,
-
-            probability=result["confidence"],
-
-            duration=duration
-
-        )
+    }
 
 
-        learning.save_prediction(
+def log_current_signal(market, status, duration=1):
+    """
+    Called when the SCAN button is pressed. Logs the CURRENT status
+    (the same one already shown on screen) as a real prediction for
+    accuracy tracking - but only when all conditions are actually
+    met right now (entry_active). A null/low-confidence read isn't
+    a prediction, so pressing SCAN then logs nothing.
 
-            market=market,
+    Returns True if a prediction was logged, False otherwise.
+    """
 
-            predicted_digit=target,
+    if not status.get("entry_active"):
+        return False
 
-            frequency_score=blueprint_data.get(
+    target = status["target_digit"]
 
-                "frequency",
+    snapshot = status.get("snapshot", {})
 
-                0
+    save_signal(
 
-            ),
+        market=market,
+        signal="MATCH",
+        digit=target,
+        probability=status["confidence"],
+        duration=duration
 
-            momentum_score=blueprint_data.get(
+    )
 
-                "momentum",
+    learning.save_prediction(
 
-                0
+        market=market,
+        predicted_digit=target,
+        frequency_score=snapshot.get("top1_pct", 0),
+        momentum_score=snapshot.get("top2_pct", 0),
+        transition_score=snapshot.get("top3_pct", 0),
+        confidence=status["confidence"],
+        signal="MATCH",
+        duration=duration
 
-            ),
+    )
 
-            transition_score=blueprint_data.get(
-
-                "transition",
-
-                0
-
-            ),
-
-            confidence=result["confidence"],
-
-            signal="PREDICTION",
-
-            duration=duration
-
-        )
-
-
-    return result
+    return True
