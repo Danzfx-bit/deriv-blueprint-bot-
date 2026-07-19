@@ -1,7 +1,65 @@
 import streamlit as st
 
 from signals import get_over_under_status
-from dashboard import _h, _inject_css, over_under_card
+from dashboard import _h, _inject_css
+
+
+def over_under_card(ou_status):
+    """
+    Renders the Over/Under 5 predictor card: current signal, graded
+    confidence, Over%/Under% split, and the trend + acceleration
+    numbers driving the signal.
+
+    Lives entirely in this module - the Over/Under strategy has no
+    footprint anywhere else in the app (dashboard.py only supplies
+    the shared _h/_inject_css styling helpers, nothing strategy
+    specific).
+    """
+
+    signal = ou_status.get("signal", "-")
+    confidence = ou_status.get("confidence", 0)
+    reason = ou_status.get("reason", "")
+    over_pct = ou_status.get("over_percent", 0)
+    under_pct = ou_status.get("under_percent", 0)
+    over_trend = ou_status.get("over_trend", 0)
+    under_trend = ou_status.get("under_trend", 0)
+    over_accel = ou_status.get("over_acceleration", 0)
+    under_accel = ou_status.get("under_acceleration", 0)
+
+    signal_color = "#2ecc71" if signal == "OVER 5" else "#D32F2F" if signal == "UNDER 5" else "#999"
+
+    st.markdown(
+        _h(f"""
+        <div class="bp-card">
+            <div class="bp-card-title"><span class="accent">📐</span> OVER / UNDER 5 PREDICTOR</div>
+
+            <div style="text-align:center;">
+                <div style="font-size:44px; font-weight:900; color:{signal_color};">{signal}</div>
+                <div class="bp-tag" style="margin-top:8px;">CONFIDENCE {confidence}%</div>
+            </div>
+
+            <div style="display:flex; gap:14px; margin-top:18px;">
+                <div style="flex:1; background:#F6F6F8; border-radius:12px; padding:14px; text-align:center;">
+                    <div class="bp-label">Over 5 (5-9)</div>
+                    <div class="bp-value" style="font-size:22px;">{over_pct}%</div>
+                    <div style="font-size:12px; color:#666; font-weight:700; margin-top:4px;">
+                        trend {over_trend:+.2f}% · accel {over_accel:+.2f}
+                    </div>
+                </div>
+                <div style="flex:1; background:#F6F6F8; border-radius:12px; padding:14px; text-align:center;">
+                    <div class="bp-label">Under 5 (0-4)</div>
+                    <div class="bp-value" style="font-size:22px;">{under_pct}%</div>
+                    <div style="font-size:12px; color:#666; font-weight:700; margin-top:4px;">
+                        trend {under_trend:+.2f}% · accel {under_accel:+.2f}
+                    </div>
+                </div>
+            </div>
+
+            <div class="bp-banner" style="margin-top:16px;">{'✅' if signal != '-' else '⏳'} {reason}</div>
+        </div>
+        """),
+        unsafe_allow_html=True
+    )
 
 
 def show():
@@ -23,7 +81,8 @@ def show():
 
     # =====================================================
     # Live status - fully automatic, recomputed fresh every
-    # rerun/tick, same as the Matches page.
+    # rerun/tick, same as the Matches page. No auto-trading is
+    # wired to this strategy - display only.
     # =====================================================
 
     status = get_over_under_status(market)
