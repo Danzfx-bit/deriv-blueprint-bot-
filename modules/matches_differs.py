@@ -1,247 +1,129 @@
-import streamlit as st
-
-from database import load_ticks
-from signals import get_live_status, log_current_signal
-from learning_engine import LearningEngine
-from dashboard import _h, confidence_donut, digit_track_widget
+from collections import Counter
 
 
-MIN_TICKS = 200
+class MatchesStrategy:
+    """
+    Digit Matches prediction strategy - on-demand, live data only.
 
+    Every time this runs (i.e. every time SCAN is pressed), it does a
+    completely fresh evaluation using whatever ticks are currently
+    available - no clock-hour windows, no persisted state between
+    calls, no locking across scans.
 
-def show():
+    Rules:
 
-    st.markdown(
-        _h("""
-        <div class="bp-card">
-            <div class="bp-title" style="font-size:26px;">📡 DIGIT MATCHES SCANNER</div>
-        </div>
-        """),
-        unsafe_allow_html=True
-    )
+    1. Take the last WINDOW ticks currently available. Rank all 10
+       digits by frequency % over that window.
+    2. Take the top 3 ranked digits. Each must be "gaining": its %
+       in the most recent HALF ticks must be higher than its % in
+       the older HALF ticks of that same window.
+    3. The #1 (most frequent) digit must be >= MIN_TOP_PERCENT (12%).
+    4. The live digit (the very latest tick) must equal the #1
+       digit right now - the "cursor touches it" entry condition.
+    5. If ALL of the above hold, this is a match: the prediction is
+       the #2 (second most frequent) digit, confidence 98%.
+       If ANY condition fails, it's a flat "no match" - confidence 0,
+       target "-" - regardless of which condition(s) failed.
+    """
 
-    market = st.session_state.get(
-        "market"
-    )
+    WINDOW = 200
+    HALF = 100
+    MIN_TOP_PERCENT = 12.0
 
-    # =====================================================
-    # Live status - fully automatic, recomputed fresh every
-    # rerun/tick. SCAN only logs whatever this already shows
-    # at the moment it's pressed.
-    # =====================================================
+    def _percentages(self, digits):
 
-    status = get_live_status(market)
+        total = len(digits)
 
-    if status["ticks_available"] < MIN_TICKS:
+        if total == 0:
+            return {d: 0.0 for d in range(10)}
 
-        st.markdown(
-            _h(f"""
-            <div class="bp-card">
-                <div class="bp-banner">📡 COLLECTING DATA... ({status['ticks_available']}/{MIN_TICKS} TICKS)</div>
-            </div>
-            """),
-            unsafe_allow_html=True
+        counts = Counter(digits)
+
+        return {
+            d: round((counts.get(d, 0) / total) * 100, 2)
+            for d in range(10)
+        }
+
+    def analyze(self, history):
+
+        if len(history) < self.WINDOW:
+
+            return {
+                "valid": False,
+                "entry_active": False,
+                "confidence": 0,
+                "reason": f"Need {self.WINDOW} ticks, have {len(history)}",
+                "target_digit": "-",
+                "top_digit": "-",
+                "top_percent": 0,
+                "second_digit": "-",
+                "second_percent": 0,
+                "third_digit": "-",
+                "third_percent": 0,
+                "gaining": {},
+                "live_digit": history[-1] if history else "-",
+                "ranking": [],
+                "full_percentages": {},
+            }
+
+        window = list(history[-self.WINDOW:])
+        older_half = window[:self.HALF]
+        recent_half = window[self.HALF:]
+
+        full_pct = self._percentages(window)
+        older_pct = self._percentages(older_half)
+        recent_pct = self._percentages(recent_half)
+
+        ranking = sorted(
+            full_pct.items(),
+            key=lambda x: x[1],
+            reverse=True
         )
 
-        st.progress(
-            status["ticks_available"] / MIN_TICKS
-        )
+        top3 = ranking[:3]
 
-        return
+        top1_digit, top1_pct = top3[0]
+        top2_digit, top2_pct = top3[1]
+        top3_digit, top3_pct = top3[2]
 
-    st.markdown(
-        _h("""
-        <div class="bp-card">
-            <div class="bp-banner">🟢 SCANNER LIVE - UPDATING EVERY TICK</div>
-        </div>
-        """),
-        unsafe_allow_html=True
-    )
+        gaining_flags = {
+            digit: recent_pct[digit] > older_pct[digit]
+            for digit, _ in top3
+        }
 
-    st.markdown(
-        _h(f"""
-        <div class="bp-card">
-            <div class="bp-label">Available Ticks</div>
-            <div class="bp-value">{status['ticks_available']}</div>
-        </div>
-        """),
-        unsafe_allow_html=True
-    )
+        all_gaining = all(gaining_flags.values())
+        threshold_met = top1_pct >= self.MIN_TOP_PERCENT
 
-    st.write(
-        "The status below updates automatically as new ticks arrive. "
-        "Press SCAN only when you want THIS moment logged for "
-        "accuracy tracking."
-    )
+        live_digit = window[-1]
+        touch = (live_digit == top1_digit)
 
-    if st.button(
-        "🔍 SCAN",
-        use_container_width=True
-    ):
+        valid = threshold_met and all_gaining
+        entry_active = valid and touch
 
-        logged = log_current_signal(
-            market,
-            status,
-            duration=1
-        )
-
-        if logged:
-            st.success(f"✅ MATCH {status['target_digit']} - logged for tracking.")
+        if not threshold_met:
+            reason = f"Top digit {top1_digit} only {top1_pct}% (< {self.MIN_TOP_PERCENT}%) - NO MATCH"
+        elif not all_gaining:
+            declining = [str(d) for d, ok in gaining_flags.items() if not ok]
+            reason = f"Digit(s) {', '.join(declining)} in top 3 declining, not gaining - NO MATCH"
+        elif not touch:
+            reason = f"Live digit hasn't touched {top1_digit} yet - NO MATCH"
         else:
-            st.info(f"⏳ NO MATCH - {status['reason']}")
+            reason = f"Live digit touched {top1_digit} - match {top2_digit}"
 
-    # =====================================================
-    # PREDICTION + CONFIDENCE
-    # =====================================================
-
-    learning = LearningEngine()
-
-    stats = learning.db.get_learning_statistics()
-
-    calibration = learning.get_calibrated_confidence(status["confidence"])
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        status_label = "🟢 MATCH" if status["entry_active"] else "⏳ NO MATCH"
-
-        st.markdown(
-            _h(f"""
-            <div class="bp-card">
-                <div class="bp-card-title"><span class="accent">🎯</span> PREDICTION</div>
-                <div class="bp-prediction-num">{status['target_digit']}</div>
-                <div style="text-align:center;">
-                    <span class="bp-tag">⏱ DURATION: {status['duration']} Tick</span>
-                </div>
-                <div class="bp-banner" style="margin-top:14px;">{status_label} · {status['reason']}</div>
-            </div>
-            """),
-            unsafe_allow_html=True
-        )
-
-    with col2:
-        st.markdown(
-            _h("""
-            <div class="bp-card">
-                <div class="bp-card-title"><span class="accent">🧬</span> CONFIDENCE LEVEL</div>
-            """),
-            unsafe_allow_html=True
-        )
-        confidence_donut(calibration["value"])
-
-        if calibration["calibrated"]:
-            note = f"REAL WIN RATE · {calibration['sample_size']} PAST SIGNALS"
-            icon = "✅"
-        else:
-            low, high = calibration["bucket"]
-            note = f"UNCALIBRATED · {calibration['sample_size']}/{calibration['min_samples']} SIGNALS IN {low}-{high}% RANGE"
-            icon = "⏳"
-
-        st.markdown(
-            _h(f"""
-                <div class="bp-banner">{icon} {note}</div>
-            </div>
-            """),
-            unsafe_allow_html=True
-        )
-
-    # =====================================================
-    # DIGIT TREND STRIP
-    # =====================================================
-
-    if status.get("full_percentages"):
-        digit_track_widget(status)
-
-    # =====================================================
-    # LEARNING ENGINE
-    # =====================================================
-
-    pending = stats["stored"] - stats["validated"]
-
-    st.markdown(
-        _h(f"""
-        <div class="bp-card">
-            <div class="bp-card-title"><span class="accent">🧬</span> LEARNING ENGINE</div>
-            <div class="bp-mini-grid">
-                <div class="bp-mini-box">
-                    <div class="bp-label">Predictions Stored</div>
-                    <div class="bp-mini-value">{stats['stored']}</div>
-                </div>
-                <div class="bp-mini-box">
-                    <div class="bp-label">Validated</div>
-                    <div class="bp-mini-value">{stats['validated']}</div>
-                </div>
-                <div class="bp-mini-box">
-                    <div class="bp-label">Correct</div>
-                    <div class="bp-mini-value green">{stats['correct']} ✓</div>
-                </div>
-                <div class="bp-mini-box">
-                    <div class="bp-label">Incorrect</div>
-                    <div class="bp-mini-value red">{stats['incorrect']} ✕</div>
-                </div>
-                <div class="bp-mini-box">
-                    <div class="bp-label">Accuracy</div>
-                    <div class="bp-mini-value">{stats['accuracy']}%</div>
-                </div>
-                <div class="bp-mini-box">
-                    <div class="bp-label">Pending</div>
-                    <div class="bp-mini-value orange">{pending}</div>
-                </div>
-            </div>
-        </div>
-        """),
-        unsafe_allow_html=True
-    )
-
-    # =====================================================
-    # TOP RANKED DIGITS + RECENT DIGITS
-    # =====================================================
-
-    col3, col4 = st.columns(2)
-
-    with col3:
-        rows_html = ""
-
-        for i, (digit, score) in enumerate(status["ranking"], start=1):
-            rows_html += _h(f"""
-            <div class="bp-rank-row">
-                <div class="bp-rank-num">{i}</div>
-                <div class="bp-rank-digit">{digit}</div>
-                <div class="bp-rank-bar-bg">
-                    <div class="bp-rank-bar-fill" style="width:{score}%;"></div>
-                </div>
-                <div class="bp-rank-pct">{score}%</div>
-            </div>
-            """) + "\n"
-
-        if not rows_html:
-            rows_html = "<div style='color:#999;font-size:13px;'>No ranking data yet</div>"
-
-        st.markdown(
-            _h(f"""
-            <div class="bp-card">
-                <div class="bp-card-title"><span class="accent">🏆</span> TOP RANKED DIGITS</div>
-                {rows_html}
-                <div class="bp-banner">⭐ LIVE - UPDATING EVERY TICK</div>
-            </div>
-            """),
-            unsafe_allow_html=True
-        )
-
-    with col4:
-        recent = load_ticks(market, limit=30)
-        chips_html = ""
-
-        for d in recent:
-            chips_html += f'<div class="bp-digit-chip">{d}</div>'
-
-        st.markdown(
-            _h(f"""
-            <div class="bp-card">
-                <div class="bp-card-title"><span class="accent">📊</span> RECENT DIGITS</div>
-                <div class="bp-digit-grid">{chips_html}</div>
-                <div class="bp-banner" style="margin-top:16px;">🕐 LAST 30 DIGITS</div>
-            </div>
-            """),
-            unsafe_allow_html=True
-        )
+        return {
+            "valid": valid,
+            "entry_active": entry_active,
+            "confidence": 98 if entry_active else 0,
+            "reason": reason,
+            "target_digit": top2_digit if entry_active else "-",
+            "top_digit": top1_digit,
+            "top_percent": top1_pct,
+            "second_digit": top2_digit,
+            "second_percent": top2_pct,
+            "third_digit": top3_digit,
+            "third_percent": top3_pct,
+            "gaining": gaining_flags,
+            "live_digit": live_digit,
+            "ranking": ranking,
+            "full_percentages": full_pct,
+        }
