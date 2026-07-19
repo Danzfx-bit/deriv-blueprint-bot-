@@ -1,12 +1,14 @@
+import threading
+
 from deriv_client import DerivClient
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
 
-from dashboard import show_dashboard, _inject_css
+from dashboard import show_dashboard
 from modules.matches_differs import show as show_matches
 from config import APP_NAME, MARKETS, TIMEFRAMES
 from database import save_tick, get_tick_count
 from learning_engine import LearningEngine
+from live_tick_buffer import LiveTickBuffer
 
 
 learning = LearningEngine()
@@ -20,14 +22,6 @@ st.set_page_config(
     page_title=APP_NAME,
     page_icon="📊",
     layout="wide"
-)
-
-_inject_css()
-
-
-st_autorefresh(
-    interval=10000,
-    key="tick_refresh"
 )
 
 
@@ -75,58 +69,89 @@ st.sidebar.info(
 st.divider()
 
 
-# ---------------- Live Market (data fetch only, no display) ---------------- #
+# ---------------- Persistent live tick stream ---------------- #
 #
-# The dashboard itself (show_dashboard) renders the live market panel,
-# prediction card, and stats. This block just keeps fetching, validating,
-# and saving ticks in the background so that data exists for the dashboard
-# to read on every rerun/autorefresh.
+# One background thread stays connected to Deriv and pushes every
+# tick straight into a thread-safe buffer + the database, as it
+# happens - no polling, no reconnect-per-tick. If the selected
+# market changes, the old thread is stopped and a fresh one starts
+# for the new market.
 
-try:
+if st.session_state.get("tick_thread_market") != market:
+
+    old_stop_event = st.session_state.get("tick_stop_event")
+
+    if old_stop_event is not None:
+        old_stop_event.set()
+
+    new_stop_event = threading.Event()
+    new_buffer = LiveTickBuffer()
+
+    st.session_state["tick_stop_event"] = new_stop_event
+    st.session_state["tick_buffer"] = new_buffer
+    st.session_state["tick_thread_market"] = market
+
+    def _make_on_tick(target_market, buffer):
+
+        def _on_tick(quote, digit):
+
+            buffer.set_tick(quote, digit)
+
+            # These open their own sqlite connections per call, so
+            # they're safe to call from this background thread.
+            save_tick(target_market, quote, digit)
+            learning.validate_prediction(digit)
+
+        return _on_tick
+
+    def _make_on_error(buffer):
+
+        def _on_error(message):
+            buffer.set_error(message)
+
+        return _on_error
 
     client = DerivClient(APP_ID)
 
-    data = client.get_latest_tick(
-        market
-    )
-
-    if "tick" in data:
-
-        quote = data["tick"]["quote"]
-
-        last_digit = int(
-            str(quote)[-1]
-        )
-
-        learning.validate_prediction(
-            last_digit
-        )
-
-        save_tick(
+    thread = threading.Thread(
+        target=client.stream_ticks,
+        args=(
             market,
-            quote,
-            last_digit
-        )
-
-    else:
-
-        st.error(
-            "No tick received"
-        )
-
-except Exception as e:
-
-    st.error(
-        f"Connection Error: {e}"
+            _make_on_tick(market, new_buffer),
+            new_stop_event,
+            _make_on_error(new_buffer),
+        ),
+        daemon=True,
     )
 
+    thread.start()
 
-# ---------------- Pages ---------------- #
 
-if page == "Dashboard":
+# ---------------- Live page content (fast, no full-page dim) ---------------- #
+#
+# This fragment reruns on its own fast timer, independent of the
+# rest of the script - only this region of the page updates, so
+# there's no full-page "running" overlay/dim on every tick.
 
-    show_dashboard(market)
+@st.fragment(run_every=1)
+def _live_content():
 
-elif page == "Matches & Differs":
+    tick_info = st.session_state["tick_buffer"].get()
 
-    show_matches()
+    if tick_info["connected"]:
+        st.sidebar.success(f"🟢 Live · digit {tick_info['digit']}")
+    elif tick_info["error"]:
+        st.sidebar.error(f"🔴 {tick_info['error']}")
+    else:
+        st.sidebar.info("🟡 Connecting to Deriv...")
+
+    if page == "Dashboard":
+
+        show_dashboard(market)
+
+    elif page == "Matches & Differs":
+
+        show_matches()
+
+
+_live_content()
