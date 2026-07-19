@@ -3,13 +3,15 @@ import streamlit as st
 from database import load_ticks
 from signals import get_live_status, log_current_signal
 from learning_engine import LearningEngine
-from dashboard import _h, confidence_donut, digit_track_widget
+from dashboard import _h, confidence_donut, digit_track_widget, _inject_css
 
 
 MIN_TICKS = 200
 
 
 def show():
+
+    _inject_css()
 
     st.markdown(
         _h("""
