@@ -418,7 +418,8 @@ class PredictionDatabase:
         conn.close()
 
         return rows
-     # ---------------------------------------
+
+    # ---------------------------------------
     # Total Predictions
     # ---------------------------------------
 
@@ -441,7 +442,6 @@ class PredictionDatabase:
         conn.close()
 
         return total
-
 
     # ---------------------------------------
     # Total Validated Predictions
@@ -469,7 +469,6 @@ class PredictionDatabase:
 
         return total
 
-
     # ---------------------------------------
     # Total Correct Predictions
     # ---------------------------------------
@@ -495,7 +494,6 @@ class PredictionDatabase:
         conn.close()
 
         return total
-
 
     # ---------------------------------------
     # Total Incorrect Predictions
@@ -523,7 +521,6 @@ class PredictionDatabase:
 
         return total
 
-
     # ---------------------------------------
     # Learning Accuracy
     # ---------------------------------------
@@ -546,7 +543,6 @@ class PredictionDatabase:
 
         )
 
-
     # ---------------------------------------
     # Learning Statistics
     # ---------------------------------------
@@ -564,5 +560,91 @@ class PredictionDatabase:
             "incorrect": self.get_total_incorrect(),
 
             "accuracy": self.get_accuracy()
+
+        }
+
+    # ---------------------------------------
+    # Confidence Calibration
+    # ---------------------------------------
+    #
+    # The raw "confidence" score saved with each prediction is just a
+    # heatmap/frequency-style number (how often a digit showed up
+    # recently) - it is NOT a measured probability of winning.
+    #
+    # These buckets let us look back at every past prediction that was
+    # made with a similar raw confidence, and report the REAL win rate
+    # those predictions actually achieved. That's what should be shown
+    # to the user as "confidence" - not the raw heatmap score.
+
+    CONFIDENCE_BUCKETS = [
+        (0, 50),
+        (50, 70),
+        (70, 85),
+        (85, 95),
+        (95, 101),
+    ]
+
+    def _get_bucket(self, confidence):
+
+        for low, high in self.CONFIDENCE_BUCKETS:
+
+            if low <= confidence < high:
+
+                return (low, high)
+
+        return self.CONFIDENCE_BUCKETS[-1]
+
+    def get_winrate_by_confidence_bucket(self, confidence):
+
+        low, high = self._get_bucket(confidence)
+
+        conn = sqlite3.connect(self.db)
+
+        cursor = conn.cursor()
+
+        cursor.execute(
+
+            """
+            SELECT
+                COUNT(*),
+                SUM(correct)
+            FROM predictions
+            WHERE correct IS NOT NULL
+            AND confidence >= ?
+            AND confidence < ?
+            """,
+
+            (low, high)
+
+        )
+
+        row = cursor.fetchone()
+
+        conn.close()
+
+        sample_size = row[0] or 0
+
+        correct_count = row[1] or 0
+
+        if sample_size == 0:
+
+            winrate = 0.0
+
+        else:
+
+            winrate = round(
+
+                (correct_count / sample_size) * 100,
+
+                2
+
+            )
+
+        return {
+
+            "bucket": (low, high),
+            "sample_size": sample_size,
+            "correct": correct_count,
+            "winrate": winrate
 
         }
